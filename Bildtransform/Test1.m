@@ -5,7 +5,7 @@
 
 clear all
 figure 
-RGB = imread('gubbe.jpg');
+RGB = imread('linda1.jpg');
 imshow(RGB)
 figure
 subplot(2,2,1)
@@ -15,7 +15,7 @@ subplot(2,2,2)
 SV1 = imcomplement(SV);
 imshow(SV1)
 subplot(2,2,3)
-B = imgaussfilt(SV1, 5);
+B = imgaussfilt(SV1, 25);
 imshow(B)
 subplot(2,2,4)
 
@@ -24,8 +24,12 @@ mode = 'ColorDodge';
 res = blendMode(B, SV, mode, 1, 1);
 imshow(res)
 
+
 rescopy = res;
-ritar = draw(rescopy);
+[vx, vy] = size(rescopy);
+
+max = vx*vy;
+[ritar,Z,E] = draw(rescopy);
 
 
 
