@@ -1,12 +1,11 @@
-function [rita,Z, E] = draw(X)
+function [rita,Z,N] = draw(X)
 
 
 n = 1;
 [sx, sy] = size(X);
 
 max = sx*sy;
-T = 1;
-R = 1;
+
 Z = cell(max,1);
 E = cell(max,1);
 A = 0;
@@ -35,27 +34,16 @@ while A < 1
                     end
 
                 end
-                if(g1 >= sy)
-                    g1 = sy;
-                elseif(g1 <= 1) 
-                    g1 = 1;
-                else
-                    g1 = g1+1;
-                end
+                g1 = jamf(sy,g1);
             end
             g1 = bildram(g);   
-            if(h1 >= sx)
-                h1 = sx;
-            elseif(h1 <= 1) 
-                h1 = 1;
-            else
-                h1 = h1+1;
-            end
+            h1 = jamf(sx, h1);
         end
         h1 = bildram(h);
-        Z{n} = [h2 g2];
-        E{n} = [h g];
-        line([g g2],[h h2],[1 1],'LineStyle','-','LineWidth',0.5,'Color', [0.5 0.5 0.5 X(I)])
+        Z{n} = [h g h2 g2 X(I)];
+        if(X(I) < 1)
+            line([g g2],[h h2],[1 1],'LineStyle','-','LineWidth',0.5,'Color', [0.5 0.5 0.5 X(I)])
+        end
 %         if(n < max*0.1)
 %             line([h h2],[g g2],[1 1],'LineStyle','-','LineWidth',0.5,'Color', [0 0 0 X(I)])
 %         elseif(n > max*0.1 && n < max*0.2)
@@ -81,7 +69,7 @@ while A < 1
     minstsk = 1;
     n = n+1
 end
-
+N = n;
 %C = X(I);
 
 rita = X;

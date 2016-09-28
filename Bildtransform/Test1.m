@@ -29,8 +29,14 @@ rescopy = res;
 [vx, vy] = size(rescopy);
 
 max = vx*vy;
-[ritar,Z,E] = draw(rescopy);
+[ritar,Z,N] = draw(rescopy);
 
+fid=fopen('output.txt','w');
+fprintf(fid,'Start Coordinate Stop Coordinate \r\n');
+for x = 1:N
+    fprintf(fid, '%d %d %d %d %1.10f \r\n', Z{x});
+end
+fclose(fid);
 
 
 
