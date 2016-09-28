@@ -32,9 +32,9 @@ max = vx*vy;
 [ritar,Z,N] = draw(rescopy);
 
 fid=fopen('output.txt','w');
-fprintf(fid,'Start Coordinate Stop Coordinate \r\n');
-for x = 1:N
-    fprintf(fid, '%d %d %d %d %1.10f \r\n', Z{x});
+fprintf(fid,'Number Start Coordinate Stop Coordinate Color/Hardness \r\n');
+for x = 1:N-1
+    fprintf(fid, '%d %s %d %d %d %d %1.10f \r\n',x,':',Z{x});
 end
 fclose(fid);
 

@@ -12,7 +12,7 @@ A = 0;
 h = 0;
 g = 0;
 figure
-axis([0 sy 0 sx])
+axis([0 sx 0 sy])
 
 minstsk = 1;
 while A < 1
@@ -42,7 +42,7 @@ while A < 1
         h1 = bildram(h);
         Z{n} = [h g h2 g2 X(I)];
         if(X(I) < 1)
-            line([g g2],[h h2],[1 1],'LineStyle','-','LineWidth',0.5,'Color', [0.5 0.5 0.5 X(I)])
+            line([h h2],[g g2],[1 1],'LineStyle','-','LineWidth',0.2,'Color', [0 0 0 1-X(I)])
         end
 %         if(n < max*0.1)
 %             line([h h2],[g g2],[1 1],'LineStyle','-','LineWidth',0.5,'Color', [0 0 0 X(I)])

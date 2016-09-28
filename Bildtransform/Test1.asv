@@ -5,7 +5,7 @@
 
 clear all
 figure 
-RGB = imread('gubbe.jpg');
+RGB = imread('linda.jpg');
 imshow(RGB)
 figure
 subplot(2,2,1)
@@ -34,7 +34,8 @@ max = vx*vy;
 fid=fopen('output.txt','w');
 fprintf(fid,'Start Coordinate Stop Coordinate \r\n');
 for x = 1:N
-    fprintf(fid, '%d %d %d %d %f \r\n', Z{x});
+    fprintf(fid, )
+    fprintf(fid, '%d %d %d %d %1.10f \r\n', Z{x});
 end
 fclose(fid);
 
