@@ -1,2 +1,0 @@
-# APA
-CDIO project

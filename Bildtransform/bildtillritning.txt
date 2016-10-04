@@ -1,5 +1,0 @@
-s = Read-File-Into-Image
-g = Convert-To-Gray-Scale(s)
-i = Invert-Colors(g) (copy of grayscale)
-b = Apply-Gaussian-Blur(i)
-result = Color-Dodge-Blend-Merge(b,g) (blured picture and grayscalepictures)
