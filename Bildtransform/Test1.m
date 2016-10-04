@@ -24,13 +24,18 @@ mode = 'ColorDodge';
 res = blendMode(B, SV, mode, 1, 1);
 imshow(res)
 
-
 rescopy = res;
 [vx, vy] = size(rescopy);
 
 max = vx*vy;
-[ritar,Z,E] = draw(rescopy);
+[ritar,Z,N] = draw(rescopy);
 
+fid=fopen('output.txt','w');
+fprintf(fid,'Number Start Coordinate Stop Coordinate Color/Hardness \r\n');
+for x = 1:N-1
+    fprintf(fid, '%d %s %d %d %d %d %1.10f \r\n',x,':',Z{x});
+end
+fclose(fid);
 
 
 
