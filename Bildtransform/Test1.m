@@ -1,38 +1,3 @@
-<<<<<<< HEAD
-%1 Konvertera till gråskala
-%2 Gör en kopia och unvertera färger
-%3 Lägg på blur på kopian
-%4 Color-dodge-merga de två bilderna
-
-clear all
-figure 
-RGB = imread('gubbe.jpg');
-imshow(RGB)
-figure
-subplot(2,2,1)
-SV = rgb2gray(RGB); %SV = svartvit
-imshow(SV)
-subplot(2,2,2)
-SV1 = imcomplement(SV);
-imshow(SV1)
-subplot(2,2,3)
-B = imgaussfilt(SV1, 5);
-imshow(B)
-subplot(2,2,4)
-
-mode = 'ColorDodge';
-
-res = blendMode(B, SV, mode, 1, 1);
-imshow(res)
-
-rescopy = res;
-ritar = draw(rescopy);
-
-
-
-
-
-=======
 %1 Konvertera till gråskala
 %2 Gör en kopia och unvertera färger
 %3 Lägg på blur på kopian
@@ -73,6 +38,3 @@ end
 fclose(fid);
 
 
-
-
->>>>>>> master
