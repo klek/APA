@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView mPhotoCapturedImageView;
     private String mImageFileLocation = "";
     public Bitmap minBild;
-
+    public Bitmap kukenbild;
     ////
     // Storage Permissions variables
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
@@ -103,9 +103,8 @@ public class MainActivity extends AppCompatActivity {
            // mPhotoCapturedImageView.setImageBitmap(photoCapturedBitmap);
 
            minBild =  setReducedImageSize();
-           rotateImage(minBild);
-            toGrayscale(minBild);
-
+           minBild = ConvertToGrayscale(minBild);
+            rotateImage(minBild);
 
 
 
@@ -182,23 +181,32 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Testar o göra en bild svart/vit
-    public Bitmap toGrayscale(Bitmap src)
-    {
-        int width, height;
-        height = src.getHeight();
-        width = src.getWidth();
+    public Bitmap ConvertToGrayscale(Bitmap bitmap) {
+        int height = bitmap.getHeight();
+        int width = bitmap.getWidth();
 
-        Bitmap bmpGrayscale = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(bmpGrayscale);
+        float[] arrayForColorMatrix = new float[] {0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,
+                0, 0, 1, 0, 0,
+                0, 0, 0, 1, 0};
+
+        Bitmap.Config config = bitmap.getConfig();
+        Bitmap grayScaleBitmap = Bitmap.createBitmap(width, height, config);
+
+        Canvas c = new Canvas(grayScaleBitmap);
         Paint paint = new Paint();
-        ColorMatrix cm = new ColorMatrix();
-        cm.setSaturation(0);
-        ColorMatrixColorFilter f = new ColorMatrixColorFilter(cm);
-        paint.setColorFilter(f);
-        c.drawBitmap(src, 0, 0, paint);
-        Bitmap toGrayScale = Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight());
-        return toGrayScale;
+
+        ColorMatrix matrix = new ColorMatrix(arrayForColorMatrix);
+        matrix.setSaturation(0);
+
+        ColorMatrixColorFilter filter = new ColorMatrixColorFilter(matrix);
+        paint.setColorFilter(filter);
+
+        c.drawBitmap(bitmap, 0, 0, paint);
+
+        return grayScaleBitmap;
     }
+
 
 
 }
