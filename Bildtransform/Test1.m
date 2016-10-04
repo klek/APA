@@ -24,7 +24,6 @@ mode = 'ColorDodge';
 res = blendMode(B, SV, mode, 1, 1);
 imshow(res)
 
-
 rescopy = res;
 [vx, vy] = size(rescopy);
 
