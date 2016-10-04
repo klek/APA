@@ -103,7 +103,9 @@ public class MainActivity extends AppCompatActivity {
            // mPhotoCapturedImageView.setImageBitmap(photoCapturedBitmap);
 
            minBild =  setReducedImageSize();
-           rotateImage( minBild);
+           rotateImage(minBild);
+            toGrayscale(minBild);
+
 
 
 
