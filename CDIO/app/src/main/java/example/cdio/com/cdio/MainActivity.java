@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int ACTIVITY_START_CAMERA_APP = 0;
     private ImageView mPhotoCapturedImageView;
     private String mImageFileLocation = "";
-    //public Bitmap minBild;
+    public Bitmap minBild;
 
     ////
     // Storage Permissions variables
@@ -102,8 +102,8 @@ public class MainActivity extends AppCompatActivity {
            // Bitmap photoCapturedBitmap = BitmapFactory.decodeFile(mImageFileLocation); //ifall man inte ska ha reduced size
            // mPhotoCapturedImageView.setImageBitmap(photoCapturedBitmap);
 
-           // minBild =  setReducedImageSize();
-           rotateImage( setReducedImageSize());
+           minBild =  setReducedImageSize();
+           rotateImage( minBild);
 
 
 
