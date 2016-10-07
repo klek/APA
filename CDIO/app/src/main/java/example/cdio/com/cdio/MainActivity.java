@@ -1,13 +1,16 @@
 package example.cdio.com.cdio;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
@@ -16,12 +19,17 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicBlur;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -34,8 +42,9 @@ public class MainActivity extends AppCompatActivity {
     private ImageView mPhotoCapturedImageView;
     private String mImageFileLocation = "";
     public Bitmap minBild;
-    public Bitmap kukenbild;
-    ////
+    public Bitmap minBlurBild;
+    public Bitmap minGrayBild;
+
     // Storage Permissions variables
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
@@ -58,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
             );
         }
     }
-
+    ////BLUR
 
     ///
     @Override
@@ -72,16 +81,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void takePhoto (View view){
+    public void takePhoto(View view) {
 
         Intent callCameraApplicationIntent = new Intent();
         callCameraApplicationIntent.setAction(MediaStore.ACTION_IMAGE_CAPTURE); // gör så man kallar på kameran
 
         File photoFile = null;
-        try{
+        try {
             photoFile = createImageFile();
 
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
         callCameraApplicationIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
@@ -92,21 +101,21 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Check which request we're responding to
-        if (requestCode == ACTIVITY_START_CAMERA_APP && resultCode == RESULT_OK ) { // Checking if request was succes!
+        if (requestCode == ACTIVITY_START_CAMERA_APP && resultCode == RESULT_OK) { // Checking if request was succes!
             //Toast.makeText(this, "Picture was taken", Toast.LENGTH_LONG).show();
 
             // Bundle extras = data.getExtras();
             // Bitmap photoCapturedBitmap = (Bitmap) extras.get("data"); //Getting data.
             //mPhotoCapturedImageView.setImageBitmap(photoCapturedBitmap);
 
-           // Bitmap photoCapturedBitmap = BitmapFactory.decodeFile(mImageFileLocation); //ifall man inte ska ha reduced size
-           // mPhotoCapturedImageView.setImageBitmap(photoCapturedBitmap);
+            // Bitmap photoCapturedBitmap = BitmapFactory.decodeFile(mImageFileLocation); //ifall man inte ska ha reduced size
+            // mPhotoCapturedImageView.setImageBitmap(photoCapturedBitmap);
 
-           minBild =  setReducedImageSize();
-           minBild = ConvertToGrayscale(minBild);
+            minBild = setReducedImageSize();
+            minGrayBild = ConvertToGrayscale(minBild);
+            minBlurBild = createInvertedBitmap(minGrayBild);
+            blurImage( ,minBlurBild);
             rotateImage(minBild);
-
-
 
 
             //tar upp mindre wjam
@@ -120,20 +129,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    File createImageFile()throws IOException {
+    File createImageFile() throws IOException {
 
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "IMAGE_" + timeStamp + "_";
         File storageDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
-        File image = File.createTempFile(imageFileName,".jpg", storageDirectory);
+        File image = File.createTempFile(imageFileName, ".jpg", storageDirectory);
         mImageFileLocation = image.getAbsolutePath();
 
         return image;
     }
 
     //Reduce image size. För wjam
-    private Bitmap setReducedImageSize(){
+    private Bitmap setReducedImageSize() {
         //void setReducedImageSize(){
         int targetImageViewWidth = mPhotoCapturedImageView.getWidth();
         int targetImageViewHeight = mPhotoCapturedImageView.getHeight();
@@ -144,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
         int cameraImageWidth = bmOptions.outWidth;
         int cameraImageHeight = bmOptions.outHeight;
 
-        int scaleFactor = Math.min(cameraImageWidth/targetImageViewWidth, cameraImageHeight/targetImageViewHeight);
+        int scaleFactor = Math.min(cameraImageWidth / targetImageViewWidth, cameraImageHeight / targetImageViewHeight);
         bmOptions.inSampleSize = scaleFactor;
         bmOptions.inJustDecodeBounds = false;
 
@@ -185,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
         int height = bitmap.getHeight();
         int width = bitmap.getWidth();
 
-        float[] arrayForColorMatrix = new float[] {0, 0, 0, 0, 0,
+        float[] arrayForColorMatrix = new float[]{0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0,
                 0, 0, 1, 0, 0,
                 0, 0, 0, 1, 0};
@@ -204,9 +213,48 @@ public class MainActivity extends AppCompatActivity {
 
         c.drawBitmap(bitmap, 0, 0, paint);
 
+
         return grayScaleBitmap;
     }
 
+    //Inverterar bild
+    public static Bitmap createInvertedBitmap(Bitmap src) {
+        ColorMatrix colorMatrix_Inverted =
+                new ColorMatrix(new float[]{
+                        -1, 0, 0, 0, 255,
+                        0, -1, 0, 0, 255,
+                        0, 0, -1, 0, 255,
+                        0, 0, 0, 1, 0});
+
+        ColorFilter ColorFilter_Sepia = new ColorMatrixColorFilter(
+                colorMatrix_Inverted);
+
+        Bitmap bitmap = Bitmap.createBitmap(src.getWidth(), src.getHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+
+        Paint paint = new Paint();
+
+        paint.setColorFilter(ColorFilter_Sepia);
+        canvas.drawBitmap(src, 0, 0, paint);
 
 
+        return bitmap;
+    }
+/*
+    //BLUR
+    public static Bitmap blurImage (Context ctx, Bitmap src){
+
+
+        final RenderScript rs = RenderScript.create(getApplicationContext());
+        final Allocation input = Allocation.createFromBitmap( rs, src, Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_SCRIPT );
+        final Allocation output = Allocation.createTyped( rs, input.getType() );
+        final ScriptIntrinsicBlur script = ScriptIntrinsicBlur.create( rs, Element.U8_4( rs ) );
+        script.setRadius( 3.f  );
+        script.setInput( input );
+        script.forEach( output );
+        output.copyTo(src);
+    }
+
+/*
 }
