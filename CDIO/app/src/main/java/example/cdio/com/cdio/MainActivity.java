@@ -33,6 +33,7 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.IntBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -112,9 +113,13 @@ public class MainActivity extends AppCompatActivity {
             // mPhotoCapturedImageView.setImageBitmap(photoCapturedBitmap);
 
             minBild = setReducedImageSize();
-            minGrayBild = ConvertToGrayscale(minBild);
-            minBlurBild = createInvertedBitmap(minGrayBild);
-            blurImage( ,minBlurBild);
+            minBild = ConvertToGrayscale(minBild);
+            minGrayBild = createInvertedBitmap(minBild);
+            for(int i = 0; i < 6; i ++) {
+                minGrayBild = blurImage(getApplicationContext(), minGrayBild);
+            }
+
+            minBild = ColorDodgeBlend(minGrayBild, minBild);
             rotateImage(minBild);
 
 
@@ -241,20 +246,76 @@ public class MainActivity extends AppCompatActivity {
 
         return bitmap;
     }
-/*
+    private static final float BLUR_RADIUS = 25f;
     //BLUR
     public static Bitmap blurImage (Context ctx, Bitmap src){
 
-
-        final RenderScript rs = RenderScript.create(getApplicationContext());
+        final RenderScript rs = RenderScript.create(ctx);
         final Allocation input = Allocation.createFromBitmap( rs, src, Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_SCRIPT );
         final Allocation output = Allocation.createTyped( rs, input.getType() );
         final ScriptIntrinsicBlur script = ScriptIntrinsicBlur.create( rs, Element.U8_4( rs ) );
-        script.setRadius( 3.f  );
+        script.setRadius( BLUR_RADIUS  );
         script.setInput( input );
         script.forEach( output );
         output.copyTo(src);
+        return src;
     }
 
-/*
+    //// Color dodge blend! merge hetc
+
+    private int colordodge(int in1, int in2) {
+        float image = (float)in2;
+        float mask = (float)in1;
+        return ((int) ((image == 255) ? image:Math.min(255, (((long)mask << 8 ) / (255 - image)))));
+
+    }
+
+    /**
+     * Blends 2 bitmaps to one and adds the color dodge blend mode to it.
+     */
+    public Bitmap ColorDodgeBlend(Bitmap source, Bitmap layer) {
+        Bitmap base = source.copy(Bitmap.Config.ARGB_8888, true);
+        Bitmap blend = layer.copy(Bitmap.Config.ARGB_8888, false);
+
+        IntBuffer buffBase = IntBuffer.allocate(base.getWidth() * base.getHeight());
+        base.copyPixelsToBuffer(buffBase);
+        buffBase.rewind();
+
+        IntBuffer buffBlend = IntBuffer.allocate(blend.getWidth() * blend.getHeight());
+        blend.copyPixelsToBuffer(buffBlend);
+        buffBlend.rewind();
+
+        IntBuffer buffOut = IntBuffer.allocate(base.getWidth() * base.getHeight());
+        buffOut.rewind();
+
+        while (buffOut.position() < buffOut.limit()) {
+            int filterInt = buffBlend.get();
+            int srcInt = buffBase.get();
+
+            int redValueFilter = Color.red(filterInt);
+            int greenValueFilter = Color.green(filterInt);
+            int blueValueFilter = Color.blue(filterInt);
+
+            int redValueSrc = Color.red(srcInt);
+            int greenValueSrc = Color.green(srcInt);
+            int blueValueSrc = Color.blue(srcInt);
+
+            int redValueFinal = colordodge(redValueFilter, redValueSrc);
+            int greenValueFinal = colordodge(greenValueFilter, greenValueSrc);
+            int blueValueFinal = colordodge(blueValueFilter, blueValueSrc);
+
+            int pixel = Color.argb(255, redValueFinal, greenValueFinal, blueValueFinal);
+
+            buffOut.put(pixel);
+        }
+
+        buffOut.rewind();
+
+        base.copyPixelsFromBuffer(buffOut);
+        blend.recycle();
+
+        return base;
+    }
+
+
 }
