@@ -96,4 +96,9 @@ Temporary Items
 # Ignoring CCStudio stuff
 .metadata
 RemoteSystemsTempFiles
-
+Debug
+.ccsproject
+.cproject
+.settings
+.launches
+.project

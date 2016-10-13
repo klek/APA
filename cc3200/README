@@ -1,0 +1,69 @@
+===================================================================================================
+
+Stuff I have done to get a working build:
+
+Installed CCSv6.2 (for linux)
+	- Make sure you add the cc3200 when installing
+	- I also installed support for Tiva-C and MSP430
+
+Installed CC3200SDK
+	- This was windows release only, but installed it with wine and some filecopying...
+
+Followed these docs to test it:
+http://www.ti.com/lit/ug/swru376d/swru376d.pdf
+http://www.ti.com/lit/ug/swru372b/swru372b.pdf (mostly to find pins...)
+
+The docs that come with the SDK (under Your_SDK_install/docs) is also very useful
+
+===================================================================================================
+
+Project creation:
+
+File > New > CCS Project
+
+Choose target as "Wireless Connectivity MCU" + "CC3200"
+
+Choose a project name
+
+Create a project with empty main
+
+
+When project is created, rightclick the project and choose properties.
+
+Resources > Linked Resources > Path Variables > New
+
+Add a new variable "CC3200_SDK_ROOT" to YOUR_SDK_INSTALL directory
+
+Close and open project properties again.
+
+Build > ARM Compiler > Include Options
+
+Under "Add dir to #include..." add the following includes:
+
+CC3200_SDK_ROOT/example/common
+CC3200_SDK_ROOT/driverlib
+CC3200_SDK_ROOT/inc
+CCE_INSTALL_ROOT/tools/compiler/arm_15.12.3.LTS/include
+
+Close and open project properties again.
+
+Build > ARM Compiler > Advance Options > Predefine Symbols
+
+Make sure the following predefined names are there
+
+ccs
+cc3200
+NON_NETWORK
+
+Close and open project properties again.
+
+Build > ARM Linker > File Search Path
+
+Under "Include library file or ..." add the driverlib.a as follows:
+
+CC3200_SDK_ROOT/driverlib/ccs/Release/driverlib.a
+
+===================================================================================================
+
+That should be all I have done to get it working...just ask otherwise
+
