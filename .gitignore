@@ -1,4 +1,4 @@
-# Built application files
+ Built application files
 *.apk
 *.ap_
 
@@ -91,3 +91,9 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+
+# Ignoring CCStudio stuff
+.metadata
+RemoteSystemsTempFiles
+
