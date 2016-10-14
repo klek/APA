@@ -63,6 +63,20 @@ Under "Include library file or ..." add the driverlib.a as follows:
 
 CC3200_SDK_ROOT/driverlib/ccs/Release/driverlib.a
 
+Close the properties.
+
+Finally we want to add two new files to the project.
+
+Right click on the project > New > File > Advanced
+
+Make sure to check the box "Link to file in the file system".
+
+Add the file gpio_if.c from "${CC3200_SDK_ROOT}/example/common/gpio_if.c"
+
+Do the exact same procedure once again but instead add the file startup_ccs.c from
+
+"${CC3200_SDK_ROOT}/example/common/startup_ccs.c"
+
 ===================================================================================================
 
 That should be all I have done to get it working...just ask otherwise
