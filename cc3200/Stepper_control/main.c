@@ -28,6 +28,8 @@
 
 // #include "pinmux.h"
 
+#define QUAD 0
+
 /*
  * Global variables needed for CCS
  */
@@ -65,35 +67,140 @@ static void BoardInit(void)
 // Test function
 void SteppingRoutine()
 {
-	// Initialize the stepcounter
-	int stepCount = 0;
+	// Initialize the stepcounter for each motor
+	int stepLeft = 0;
+	int stepRight = 0;
 
-    //
+	//
     // Toggle the lines initially to turn off the LEDs.
     // The values driven are as required by the LEDs on the LP.
     //
     GPIO_IF_LedOff(MCU_ALL_LED_IND);
+
+	while (1)
+	{
+		while ( (stepLeft <= 0 && stepLeft > -2800) && (stepRight >= 0 && stepRight < 2800) )
+		{
+			// Increase/Decrease step per motor
+			stepLeft--;
+			stepRight++;
+
+			// Set directions
+			GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+			GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+
+			// Step
+			MAP_UtilsDelay(20000);
+			GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+			MAP_UtilsDelay(20000);
+			GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
+		}
+
+		while ( (stepLeft >= -2800 && stepLeft < 0) && (stepRight >= 2800 && stepRight < 5600) )
+		{
+			// Increase/Decrease step per motor
+			stepLeft++;
+			stepRight++;
+
+			// Set directions
+			GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+			GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+
+			// Step
+			MAP_UtilsDelay(20000);
+			GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+			MAP_UtilsDelay(20000);
+			GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
+		}
+#if !QUAD
+		while ( /*(stepLeft >= 0 && stepLeft < 2800) &&*/ (stepRight <= 5600 && stepRight > 0) )
+		{
+			if ( stepLeft == 0 ) {
+				stepLeft++;
+				// Set direction of left motor to CW
+				GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+			}
+			else {
+				stepLeft--;
+				// Set direction of left motor to CCW
+				GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+			}
+
+			// Increase/Decrease step per motor
+			stepRight--;
+
+			// Set directions of right motor
+			GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+
+			// Step
+			MAP_UtilsDelay(20000);
+			GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+			MAP_UtilsDelay(20000);
+			GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
+		}
+
+
+#else
+		while ( (stepLeft >= 0 && stepLeft < 2800) && (stepRight <= 5600 && stepRight > 2800) )
+		{
+			// Increase/Decrease step per motor
+			stepLeft++;
+			stepRight--;
+
+			// Set directions
+			GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+			GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+
+			// Step
+			MAP_UtilsDelay(20000);
+			GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+			MAP_UtilsDelay(20000);
+			GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
+		}
+
+		while ( (stepLeft <= 2800 && stepLeft > 0) && (stepRight <= 2800 && stepRight > 0) )
+		{
+			// Increase/Decrease step per motor
+			stepLeft--;
+			stepRight--;
+
+			// Set directions
+			GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+			GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+
+			// Step
+			MAP_UtilsDelay(20000);
+			GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+			MAP_UtilsDelay(20000);
+			GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
+		}
+#endif
+	}
+
+#if 0
     while(1)
     {
     	/*
     	 * D5 - Green - Pin_02 - DIR
     	 * D6 - Orange - Pin_01 - STEP
-    	 * D7 - Red - Pin_64 - MODE0
+    	 * D7 - Red - Pin_64 - DIR2
     	 */
 
     	// Check how many steps has been taken
-    	if ( stepCount >= 0 && stepCount < 400 ) {
+    	if ( stepCount >= 0 && stepCount < 2800 ) {
     		// Increment the stepCounter
     		stepCount++;
     		// Stepping control
 			// Set direction low
 			GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+			GPIO_IF_LedOn(MCU_RED_LED_GPIO);
     	}
-    	else if ( stepCount >= 400 && stepCount < 800 ){
+    	else if ( stepCount >= 2800 && stepCount < 5600 ){
        		// Increment the stepcounter
     		stepCount++;
     		// Set direction high
     		GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+    		GPIO_IF_LedOff(MCU_RED_LED_GPIO);
     	}
     	else {
        		// Reset the stepcounter
@@ -123,7 +230,7 @@ void SteppingRoutine()
 //        MAP_UtilsDelay(8000000);
 //        GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
     }
-
+#endif
 }
 
 /*
