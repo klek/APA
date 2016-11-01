@@ -79,11 +79,11 @@ void SteppingRoutine()
 
 	while (1)
 	{
-		while ( (stepLeft <= 0 && stepLeft > -2800) && (stepRight >= 0 && stepRight < 2800) )
+		while ( (stepLeft >= 0 && stepLeft < 2800) && (stepRight <= 0 && stepRight > -2800) )
 		{
 			// Increase/Decrease step per motor
-			stepLeft--;
-			stepRight++;
+			stepLeft++;
+			stepRight--;
 
 			// Set directions
 			GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
@@ -96,13 +96,13 @@ void SteppingRoutine()
 			GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
 		}
 
-		while ( (stepLeft >= -2800 && stepLeft < 0) && (stepRight >= 2800 && stepRight < 5600) )
+		while ( (stepLeft >= 2800 && stepLeft < 5600) && (stepRight >= -2800 && stepRight < 0) )
 		{
 			// Increase/Decrease step per motor
 			stepLeft++;
 			stepRight++;
 
-			// Set directions
+			// Set directions to clockwise
 			GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
 			GPIO_IF_LedOn(MCU_RED_LED_GPIO);
 
@@ -113,21 +113,29 @@ void SteppingRoutine()
 			GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
 		}
 #if !QUAD
-		while ( /*(stepLeft >= 0 && stepLeft < 2800) &&*/ (stepRight <= 5600 && stepRight > 0) )
+		tBoolean clockWise = true;
+		while ( (stepLeft <= 5600 && stepLeft > 0) )
 		{
-			if ( stepLeft == 0 ) {
-				stepLeft++;
+
+			if ( clockWise == true ) {
+				stepRight++;
 				// Set direction of left motor to CW
 				GPIO_IF_LedOff(MCU_RED_LED_GPIO);
 			}
 			else {
-				stepLeft--;
+				stepRight--;
 				// Set direction of left motor to CCW
 				GPIO_IF_LedOn(MCU_RED_LED_GPIO);
 			}
 
+			if ( stepRight == 0 ) {
+				clockWise = true;
+			}
+			else if ( stepRight == 2 ) {
+				clockWise = false;
+			}
 			// Increase/Decrease step per motor
-			stepRight--;
+			stepLeft--;
 
 			// Set directions of right motor
 			GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
@@ -141,11 +149,11 @@ void SteppingRoutine()
 
 
 #else
-		while ( (stepLeft >= 0 && stepLeft < 2800) && (stepRight <= 5600 && stepRight > 2800) )
+		while ( (stepLeft <= 5600 && stepLeft > 2800) && (stepRight >= 0 && stepRight < 2800) )
 		{
 			// Increase/Decrease step per motor
-			stepLeft++;
-			stepRight--;
+			stepLeft--;
+			stepRight++;
 
 			// Set directions
 			GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
@@ -156,7 +164,8 @@ void SteppingRoutine()
 			GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
 			MAP_UtilsDelay(20000);
 			GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
-		}
+		}			GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+
 
 		while ( (stepLeft <= 2800 && stepLeft > 0) && (stepRight <= 2800 && stepRight > 0) )
 		{
