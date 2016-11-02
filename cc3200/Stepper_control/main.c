@@ -28,7 +28,8 @@
 
 // #include "pinmux.h"
 
-#define QUAD 0
+#define QUAD 	1
+#define DIR2	8
 
 /*
  * Global variables needed for CCS
@@ -71,6 +72,11 @@ void SteppingRoutine()
 	int stepLeft = 0;
 	int stepRight = 0;
 
+	// Get port and pins
+	unsigned int GPIO8Port = 0;
+	unsigned char GPIO8Pin;
+	GPIO_IF_GetPortNPin(DIR2, &GPIO8Port, &GPIO8Pin);
+
 	//
     // Toggle the lines initially to turn off the LEDs.
     // The values driven are as required by the LEDs on the LP.
@@ -87,7 +93,9 @@ void SteppingRoutine()
 
 			// Set directions
 			GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
-			GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+			//GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+			GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 1);
+
 
 			// Step
 			MAP_UtilsDelay(20000);
@@ -104,7 +112,8 @@ void SteppingRoutine()
 
 			// Set directions to clockwise
 			GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
-			GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+//			GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+			GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 1);
 
 			// Step
 			MAP_UtilsDelay(20000);
@@ -120,12 +129,14 @@ void SteppingRoutine()
 			if ( clockWise == true ) {
 				stepRight++;
 				// Set direction of left motor to CW
-				GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+//				GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+				GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 0);
 			}
 			else {
 				stepRight--;
 				// Set direction of left motor to CCW
-				GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+//				GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+				GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 1);
 			}
 
 			if ( stepRight == 0 ) {
@@ -157,14 +168,15 @@ void SteppingRoutine()
 
 			// Set directions
 			GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
-			GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+//			GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+			GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 0);
 
 			// Step
 			MAP_UtilsDelay(20000);
 			GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
 			MAP_UtilsDelay(20000);
 			GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
-		}			GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+		}
 
 
 		while ( (stepLeft <= 2800 && stepLeft > 0) && (stepRight <= 2800 && stepRight > 0) )
@@ -175,7 +187,8 @@ void SteppingRoutine()
 
 			// Set directions
 			GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
-			GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+//			GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+			GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 0);
 
 			// Step
 			MAP_UtilsDelay(20000);
@@ -273,8 +286,15 @@ static void PinMuxConfig(void)
     //
     // Configure PIN_64 for GPIOOutput
     //
-    MAP_PinTypeGPIO(PIN_64, PIN_MODE_0, false);
-    MAP_GPIODirModeSet(GPIOA1_BASE, 0x2, GPIO_DIR_MODE_OUT);
+//    MAP_PinTypeGPIO(PIN_64, PIN_MODE_0, false);
+//    MAP_GPIODirModeSet(GPIOA1_BASE, 0x2, GPIO_DIR_MODE_OUT);
+
+    MAP_PinTypeGPIO(PIN_63, PIN_MODE_0, false);
+	// Get port and pins
+	unsigned int GPIO8Port = 0;
+	unsigned char GPIO8Pin;
+	GPIO_IF_GetPortNPin(DIR2, &GPIO8Port, &GPIO8Pin);
+    MAP_GPIODirModeSet(GPIO8Port, GPIO8Pin, GPIO_DIR_MODE_OUT);
 
     //
     // Configure PIN_01 for GPIOOutput
