@@ -26,6 +26,7 @@ import android.renderscript.ScriptIntrinsicBlur;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -33,10 +34,16 @@ import android.widget.Toast;
 
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.IntBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import static android.R.attr.data;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -48,7 +55,8 @@ public class MainActivity extends AppCompatActivity {
     public Bitmap minGrayBild;
     public int cameraImageWidth;
     public int cameraImageHeight;
-    
+    public String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/CDIO";
+    public float[] originalcord = new float[6];
 
     // Storage Permissions variables
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
@@ -104,6 +112,31 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void writeData(float[] data) {
+        try {
+        String s = Float.toString(data[1]);
+        File sdCard = Environment.getExternalStorageDirectory();
+        File dir = new File (sdCard.getAbsolutePath());
+        File f = new File(dir, "kord.txt");
+
+            FileWriter writer = new FileWriter(f, true);
+            writer.append(s);
+            writer.flush();
+            writer.close();
+        }
+        catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
+        }
+
+    }
+
+    public void saveButton (View view){
+
+        writeData(originalcord);
+    }
+
+
+
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Check which request we're responding to
 
@@ -126,17 +159,17 @@ public class MainActivity extends AppCompatActivity {
 
             minBild = ColorDodgeBlend(minGrayBild, minBild);
             rotateImage(minBild);
-            float[] asdas = new float[6];
+            //float[] originalcord = new float[6];
             for(int j = 1; j < 6; j++) {
-                int pixel = minBild.getPixel(j*50, j*60);>
+                int pixel = minBild.getPixel(j*50, j*60);
                 float[] hsv = new float[3];
 
                 Color.colorToHSV(pixel, hsv);
-                asdas[j] = hsv[2]; // 0 = hue value (h), 1 = saturation value (s), 2 = value value (v)
+                originalcord[j] = hsv[2]; // 0 = hue value (h), 1 = saturation value (s), 2 = value value (v)
                 //sgkas[j] = hsv[1];
             }
             TextView tv = (TextView) findViewById(R.id.textView2);
-            tv.setText("P:"+asdas[1]+","+asdas[2]+","+asdas[3]+","+asdas[4]+","+asdas[5]);
+            tv.setText("P:"+originalcord[1]+","+originalcord[2]+","+originalcord[3]+","+originalcord[4]+","+originalcord[5]);
 
             //TextView tv1 = (TextView) findViewById(R.id.textView);
             //tv1.setText("P:"+sgkas[1]+","+sgkas[2]+","+sgkas[3]+","+sgkas[4]+","+sgkas[5]);

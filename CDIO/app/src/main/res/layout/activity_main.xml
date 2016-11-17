@@ -50,7 +50,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/capturePhotoImageView"
         android:layout_alignEnd="@+id/textView3"
-        android:id="@+id/saveButton" />
+        android:id="@+id/saveButton"
+        android:onClick="saveButton" />
 
 
 </RelativeLayout>
