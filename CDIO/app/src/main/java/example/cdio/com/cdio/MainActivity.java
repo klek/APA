@@ -28,6 +28,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -45,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
     public Bitmap minBild;
     public Bitmap minBlurBild;
     public Bitmap minGrayBild;
+    public int cameraImageWidth;
+    public int cameraImageHeight;
+    
 
     // Storage Permissions variables
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
@@ -102,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Check which request we're responding to
+
         if (requestCode == ACTIVITY_START_CAMERA_APP && resultCode == RESULT_OK) { // Checking if request was succes!
             //Toast.makeText(this, "Picture was taken", Toast.LENGTH_LONG).show();
 
@@ -121,7 +126,20 @@ public class MainActivity extends AppCompatActivity {
 
             minBild = ColorDodgeBlend(minGrayBild, minBild);
             rotateImage(minBild);
+            float[] asdas = new float[6];
+            for(int j = 1; j < 6; j++) {
+                int pixel = minBild.getPixel(j*50, j*60);>
+                float[] hsv = new float[3];
 
+                Color.colorToHSV(pixel, hsv);
+                asdas[j] = hsv[2]; // 0 = hue value (h), 1 = saturation value (s), 2 = value value (v)
+                //sgkas[j] = hsv[1];
+            }
+            TextView tv = (TextView) findViewById(R.id.textView2);
+            tv.setText("P:"+asdas[1]+","+asdas[2]+","+asdas[3]+","+asdas[4]+","+asdas[5]);
+
+            //TextView tv1 = (TextView) findViewById(R.id.textView);
+            //tv1.setText("P:"+sgkas[1]+","+sgkas[2]+","+sgkas[3]+","+sgkas[4]+","+sgkas[5]);
 
             //tar upp mindre wjam
             //blackNwhite(setReducedImageSize());
@@ -155,8 +173,11 @@ public class MainActivity extends AppCompatActivity {
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(mImageFileLocation, bmOptions);
-        int cameraImageWidth = bmOptions.outWidth;
-        int cameraImageHeight = bmOptions.outHeight;
+        cameraImageWidth = bmOptions.outWidth; //Target Width
+        cameraImageHeight = bmOptions.outHeight; //Target Height
+
+        TextView tv = (TextView)findViewById(R.id.textView3);
+        tv.setText("W:"+cameraImageWidth+" H:"+cameraImageHeight);
 
         int scaleFactor = Math.min(cameraImageWidth / targetImageViewWidth, cameraImageHeight / targetImageViewHeight);
         bmOptions.inSampleSize = scaleFactor;
