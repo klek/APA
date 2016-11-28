@@ -258,7 +258,7 @@ void SteppingRoutine()
 /*
  * Main function
  */
-int main()
+/*int main()
 {
 	// Initialize board config
 	BoardInit();
@@ -275,7 +275,7 @@ int main()
 	// End program
 	return 0;
 }
-
+*/
 static void PinMuxConfig(void)
 {
     //
