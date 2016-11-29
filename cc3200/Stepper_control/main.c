@@ -1,5 +1,5 @@
 /*******************************************************************
-   $File:    new_main.c
+   $File:    main.c
    $Date:    Mon, 28 Nov 2016: 10:08
    $Version: 
    $Author:  klek 
@@ -77,8 +77,8 @@
 #define ROLE_INVALID                    (-5)
 #define AUTO_CONNECTION_TIMEOUT_COUNT   (50)   /* 5 Sec */
 
-#define QUAD 	1
-#define DIR2	8
+#define QUAD    1
+#define DIR2    8
 
 
 // Application specific status/error codes
@@ -91,6 +91,12 @@ typedef enum{
     STATUS_CODE_MAX = -0xBB8
 }e_AppStatusCodes;
 
+enum directions {
+    POS_X,
+    POS_Y,
+    NEG_X,
+    NEG_Y
+};
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- Start
@@ -117,9 +123,10 @@ extern uVectorEntry __vector_table;
 //*****************************************************************************
 
 //*****************************************************************************
-//				   Function prototypes
+//                 Function prototypes
 //*****************************************************************************
-static void PinMuxConfig();
+static void PinMuxConfig(void);
+static void move(unsigned char direction);
 
 //*****************************************************************************
 // Variable related to Connection status
@@ -484,7 +491,7 @@ void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent)
             // pEventData = &pNetAppEvent->EventData.ipReleased;
             //
         }
-		break;
+        break;
 
         default:
         {
@@ -922,40 +929,40 @@ long ConnectToNetwork()
         lRetVal = sl_NetAppStart(SL_NET_APP_HTTP_SERVER_ID);
         ASSERT_ON_ERROR( lRetVal);
 
-		//waiting for the device to Auto Connect
-		while ( (!IS_IP_ACQUIRED(g_ulStatus))&&
-			   g_ucConnectTimeout < AUTO_CONNECTION_TIMEOUT_COUNT)
-		{
-			//Turn RED LED On
-			GPIO_IF_LedOn(MCU_RED_LED_GPIO);
-			osi_Sleep(50);
+        //waiting for the device to Auto Connect
+        while ( (!IS_IP_ACQUIRED(g_ulStatus))&&
+               g_ucConnectTimeout < AUTO_CONNECTION_TIMEOUT_COUNT)
+        {
+            //Turn RED LED On
+            GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+            osi_Sleep(50);
 
-			//Turn RED LED Off
-			GPIO_IF_LedOff(MCU_RED_LED_GPIO);
-			osi_Sleep(50);
+            //Turn RED LED Off
+            GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+            osi_Sleep(50);
 
-			g_ucConnectTimeout++;
-		}
-		//Couldn't connect Using Auto Profile
-		if(g_ucConnectTimeout == AUTO_CONNECTION_TIMEOUT_COUNT)
-		{
-			//Blink Red LED to Indicate Connection Error
-			GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+            g_ucConnectTimeout++;
+        }
+        //Couldn't connect Using Auto Profile
+        if(g_ucConnectTimeout == AUTO_CONNECTION_TIMEOUT_COUNT)
+        {
+            //Blink Red LED to Indicate Connection Error
+            GPIO_IF_LedOn(MCU_RED_LED_GPIO);
 
-			CLR_STATUS_BIT_ALL(g_ulStatus);
+            CLR_STATUS_BIT_ALL(g_ulStatus);
 
-			Report("Use Smart Config Application to configure the device.\n\r");
-			//Connect Using Smart Config
-//			lRetVal = SmartConfigConnect();
-			ASSERT_ON_ERROR(lRetVal);
+            Report("Use Smart Config Application to configure the device.\n\r");
+            //Connect Using Smart Config
+//          lRetVal = SmartConfigConnect();
+            ASSERT_ON_ERROR(lRetVal);
 
-			//Waiting for the device to Auto Connect
-			while(!IS_IP_ACQUIRED(g_ulStatus))
-			{
-				MAP_UtilsDelay(500);
-			}
+            //Waiting for the device to Auto Connect
+            while(!IS_IP_ACQUIRED(g_ulStatus))
+            {
+                MAP_UtilsDelay(500);
+            }
 
-		}
+        }
     //Turn RED LED Off
     GPIO_IF_LedOff(MCU_RED_LED_GPIO);
     UART_PRINT("\n\rDevice is in STA Mode, Connect to the AP[%s] and type"
@@ -1099,19 +1106,19 @@ DisplayBanner(char * AppName)
 // Board initialization and config
 static void BoardInit(void)
 {
-	// Set the vector table base
-	// if TI-RTOS would be used, the OS itself would do this
+    // Set the vector table base
+    // if TI-RTOS would be used, the OS itself would do this
 #if !defined(USE_TIRTOS)
 #if defined(ccs)
-	MAP_IntVTableBaseSet((unsigned long)&g_pfnVectors[0]);
+    MAP_IntVTableBaseSet((unsigned long)&g_pfnVectors[0]);
 #endif
 #endif
 
-	// Enable Processor
-	MAP_IntMasterEnable();
-	MAP_IntEnable(FAULT_SYSTICK);
+    // Enable Processor
+    MAP_IntMasterEnable();
+    MAP_IntEnable(FAULT_SYSTICK);
 
-	PRCMCC3200MCUInit();
+    PRCMCC3200MCUInit();
 }
 
 //****************************************************************************
@@ -1182,15 +1189,13 @@ void main()
 // Configuration of pins to be used
 static void PinMuxConfig(void)
 {
-    //
     // Enable Peripheral Clocks
-    //
     MAP_PRCMPeripheralClkEnable(PRCM_UARTA0, PRCM_RUN_MODE_CLK);
-    MAP_PRCMPeripheralClkEnable(PRCM_GPIOA0, PRCM_RUN_MODE_CLK);		// Needed? Are we using GPIOA0?
+    MAP_PRCMPeripheralClkEnable(PRCM_GPIOA0, PRCM_RUN_MODE_CLK);        // Needed? Are we using GPIOA0?
     MAP_PRCMPeripheralClkEnable(PRCM_GPIOA1, PRCM_RUN_MODE_CLK);
 
     /*********************************
-     * 	UART-pins
+     *  UART-pins
      *********************************/
     // Configure PIN_55 for UART0 UART0_TX
     MAP_PinTypeUART(PIN_55, PIN_MODE_3);
@@ -1202,10 +1207,10 @@ static void PinMuxConfig(void)
 //    MAP_GPIODirModeSet(GPIOA1_BASE, 0x2, GPIO_DIR_MODE_OUT);
 
     MAP_PinTypeGPIO(PIN_63, PIN_MODE_0, false);
-	// Get port and pins
-	unsigned int GPIO8Port = 0;
-	unsigned char GPIO8Pin;
-	GPIO_IF_GetPortNPin(DIR2, &GPIO8Port, &GPIO8Pin);
+    // Get port and pins
+    unsigned int GPIO8Port = 0;
+    unsigned char GPIO8Pin;
+    GPIO_IF_GetPortNPin(DIR2, &GPIO8Port, &GPIO8Pin);
     MAP_GPIODirModeSet(GPIO8Port, GPIO8Pin, GPIO_DIR_MODE_OUT);
 
     // Configure PIN_01 for GPIOOutput
@@ -1215,4 +1220,48 @@ static void PinMuxConfig(void)
     // Configure PIN_02 for GPIOOutput
     MAP_PinTypeGPIO(PIN_02, PIN_MODE_0, false);
     MAP_GPIODirModeSet(GPIOA1_BASE, 0x8, GPIO_DIR_MODE_OUT);
+}
+
+// Function to take 1 step in the specified direction according to
+// the XY-plane
+static void move(unsigned char direction)
+{
+    // TODO(klek): Change pin names to something more obvious
+    
+    // TODO(klek): Use same function to set pins. Follow-up on the above todo.
+    switch(direction)
+    {
+    case POS_X:
+        // Both motors should spin counterclockwise
+        GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+        GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 1);
+        break;
+
+    case POS_Y:
+        // Left motor should spin clockwise, right motor should spin counterclockwise
+        GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+        GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 1);
+        break;
+
+    case NEG_X:
+        // Both motors should spin clockwise
+        GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+        GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 0);        
+        break;
+
+    case NEG_Y:
+        GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+        GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 0);
+        break;
+        
+    default:
+        break;
+    }
+
+    // We should always make a step after direction has been set
+    MAP_UtilsDelay(20000);                     // Can we have this smaller?
+    GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
+    MAP_UtilsDelay(20000);                     // Can we have this smaller?
+    GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
+
 }
