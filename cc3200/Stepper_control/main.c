@@ -59,6 +59,9 @@
 //#include "smartconfig.h"
 //#include "pinmux.h"
 
+// Special headers
+#include "movement.h"
+#include "gpio_func.h"   // TODO(klek): Replacing gpio_if??
 
 #define APPLICATION_NAME        "HTTP Server"
 #define APPLICATION_VERSION     "1.1.1"
@@ -91,12 +94,6 @@ typedef enum{
     STATUS_CODE_MAX = -0xBB8
 }e_AppStatusCodes;
 
-enum directions {
-    POS_X,
-    POS_Y,
-    NEG_X,
-    NEG_Y
-};
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- Start
@@ -1222,46 +1219,3 @@ static void PinMuxConfig(void)
     MAP_GPIODirModeSet(GPIOA1_BASE, 0x8, GPIO_DIR_MODE_OUT);
 }
 
-// Function to take 1 step in the specified direction according to
-// the XY-plane
-static void move(unsigned char direction)
-{
-    // TODO(klek): Change pin names to something more obvious
-    
-    // TODO(klek): Use same function to set pins. Follow-up on the above todo.
-    switch(direction)
-    {
-    case POS_X:
-        // Both motors should spin counterclockwise
-        GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
-        GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 1);
-        break;
-
-    case POS_Y:
-        // Left motor should spin clockwise, right motor should spin counterclockwise
-        GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
-        GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 1);
-        break;
-
-    case NEG_X:
-        // Both motors should spin clockwise
-        GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
-        GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 0);        
-        break;
-
-    case NEG_Y:
-        GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
-        GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 0);
-        break;
-        
-    default:
-        break;
-    }
-
-    // We should always make a step after direction has been set
-    MAP_UtilsDelay(20000);                     // Can we have this smaller?
-    GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
-    MAP_UtilsDelay(20000);                     // Can we have this smaller?
-    GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
-
-}
