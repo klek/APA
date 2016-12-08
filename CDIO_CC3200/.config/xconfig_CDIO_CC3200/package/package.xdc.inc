@@ -1,0 +1,12 @@
+package.xdc
+package.xs
+package/xconfig_CDIO_CC3200.sch
+package/.vers_g180
+package/.vers_r170
+package/.vers_b160
+package/.xdc-B06
+package/xconfig_CDIO_CC3200.java
+package/xconfig_CDIO_CC3200.class
+package/package_xconfig_CDIO_CC3200.c
+package/package.defs.h
+package/xconfig_CDIO_CC3200.ccs
