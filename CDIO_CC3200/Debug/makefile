@@ -143,7 +143,7 @@ all: CDIO_CC3200.out
 CDIO_CC3200.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: ARM Linker'
-	"C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=vfplib -me -g --define=cc3200 --define=PART_CC3200 --define=ccs --define=CCWARE --diag_wrap=off --diag_warning=225 --diag_warning=255 --display_error_number --gen_func_subsections=on --abi=eabi -z -m"CDIO_CC3200.map" --stack_size=0x1024 --heap_size=0x0 -i"C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/lib" -i"C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/include" --reread_libs --diag_wrap=off --warn_sections --display_error_number --xml_link_info="CDIO_CC3200_linkInfo.xml" --rom_model -o "CDIO_CC3200.out" $(ORDERED_OBJS)
+	"C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=vfplib -me -g --define=cc3200 --define=PART_CC3200 --define=ccs --define=CCWARE --diag_wrap=off --diag_warning=225 --diag_warning=255 --display_error_number --gen_func_subsections=on --abi=eabi -z -m"CDIO_CC3200.map" --stack_size=0x1024 --heap_size=0x0 -i"C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/lib" -i"C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/include" --reread_libs --display_error_number --warn_sections --diag_wrap=off --xml_link_info="CDIO_CC3200_linkInfo.xml" --rom_model -o "CDIO_CC3200.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
