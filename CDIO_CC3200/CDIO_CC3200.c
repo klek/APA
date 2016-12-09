@@ -47,6 +47,7 @@
 #define QUAD 	1
 #define DIR2	8
 #define SCALE 	1
+#define COORDSIZE 14
 
 enum directions {
     POS_X,
@@ -61,7 +62,10 @@ Char task0Stack[TASKSTACKSIZE];
 
 
 void init_step();
+void initInt();
 void brytarInt();
+//void brytarInt(unsigned int index);
+void brytarIntYO(unsigned int index);
 static void move(unsigned char direction);
 void charToInt(char coord[], int *xStart, int *yStart, int *xEnd, int *yEnd, int *zPos);
 
@@ -77,6 +81,10 @@ struct step steps;
 /* variable to be read by GUI Composer */
 int count = 0;
 
+
+
+
+//void brytarInt()
 void brytarInt(unsigned int index)
 {
 	/* Stop the motors in this direction */
@@ -86,12 +94,24 @@ void brytarInt(unsigned int index)
 
     //GPIO_toggle(Board_LED0);
 
-    if (count++ == 2) {
+    if (count++ == 1) {
         count = 0;
     }
 
 
+}
+void brytarIntYO(unsigned int index)
+{
+	/* Stop the motors in this direction */
+	/* Decide what switch was activated */
 
+    /* Clear the GPIO interrupt and toggle an LED */
+
+    //GPIO_toggle(Board_LED0);
+
+    if (count++ == 1) {
+        count = 0;
+    }
 }
 
 
@@ -131,7 +151,7 @@ void moveTask(UArg arg0, UArg arg1)
 	uartParams.readReturnMode = UART_RETURN_FULL;
 	uartParams.readEcho = UART_ECHO_ON;
 	uartParams.baudRate = 9600;
-	uart = UART_open(Board_UART0, &uartParams);
+	uart = UART_open(Board_UART1, &uartParams);
 
 	/* Initiate the PWM */
     /*uint16_t   pwmPeriod = 20;      // Period and duty in microseconds
@@ -263,7 +283,7 @@ void moveTask(UArg arg0, UArg arg1)
 void charToInt(char coord[], int *xStart, int *yStart, int *xEnd, int *yEnd, int *zPos)
 {
 	int i;
-	for(i = 0; i < 14; i++)
+	for(i = 0; i < COORDSIZE; i++)
 	{
 		if ((coord[i] < 58) && (coord[i] > 47))
 		{
@@ -329,8 +349,8 @@ static void move(unsigned char direction)
         //GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
         //GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 1);
 
-        GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
-		GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
+        GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
+		GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
 		steps.y++;
         break;
 
@@ -348,8 +368,8 @@ static void move(unsigned char direction)
         //GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
         //GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 0);
 
-    	GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
-		GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
+    	GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
+		GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
 		steps.y--;
     	break;
 
@@ -372,14 +392,67 @@ static void move(unsigned char direction)
 }
 
 
+void initInt()
+{
+
+	//
+	// Enable Processor
+	//
+//	MAP_IntMasterEnable();
+//	MAP_IntEnable(FAULT_SYSTICK);
+
+//	PRCMCC3200MCUInit();
+/*
+	// Init interrupt for GPIO 22 - Pin 15
+	unsigned int GPIO22Port = 0;
+	unsigned char GPIO22Pin;
+	GPIO_IF_GetPortNPin(22, &GPIO22Port, &GPIO22Pin);
+	GPIOIntTypeSet(GPIO22Port,GPIO22Pin,GPIO_HIGH_LEVEL);
+	GPIOIntRegister(GPIO22Port,brytarInt);
+	GPIOIntClear(GPIO22Port,GPIO22Pin);
+	IntPendClear(INT_GPIOA2);
+
+
+	// Init interrupt for GPIO1 - Pin55
+	unsigned int GPIO1Port = 0;
+	unsigned char GPIO1Pin;
+	//unsigned int GPIO1Int;
+	GPIO_IF_GetPortNPin(1, &GPIO1Port, &GPIO1Pin);
+	//GPIO1Int = GetPeripheralIntNum(GPIO1Port);
+	GPIOIntTypeSet(GPIO1Port,GPIO1Pin,GPIO_HIGH_LEVEL);
+	GPIOIntRegister(GPIO1Port,brytarIntYO);
+	GPIOIntClear(GPIO1Port,GPIO1Pin);
+	IntPendClear(INT_GPIOA0);
+	IntEnable(INT_GPIOA0); // For GPIO1
+	GPIOIntEnable(GPIO1Port,GPIO1Pin); // For GPIO1
+
+*/
+	/*
+	// Init interrupt for GPIO23 - Pin16
+	unsigned int GPIO24Port = 0;
+	unsigned char GPIO24Pin;
+	//unsigned int GPIO1Int;
+	GPIO_IF_GetPortNPin(24, &GPIO24Port, &GPIO24Pin);
+	//GPIO1Int = GetPeripheralIntNum(GPIO1Port);
+	GPIOIntTypeSet(GPIO24Port,GPIO24Pin,GPIO_HIGH_LEVEL);
+	GPIOIntRegister(GPIO24Port,brytarIntYO);
+	GPIOIntClear(GPIO24Port,GPIO24Pin);
+	IntPendClear(INT_GPIOA3);
+	IntEnable(INT_GPIOA3); // For GPIO24
+	GPIOIntEnable(GPIO24Port,GPIO24Pin); // For GPIO24
+*/
+	//IntEnable(INT_GPIOA2); // For GPIO22 & GPIO23
+	//GPIOIntEnable(GPIO22Port,GPIO22Pin); // For GPIO22 & GPIO23
+
+
+}
+
 /*
  *  ======== main ========
  */
 
 int main(void)
 {
-
-
     // Call board init functions
     Board_initGeneral();
     Board_initGPIO();
@@ -400,15 +473,22 @@ int main(void)
     taskParams.instance->name = "echo";
     Task_construct(&task0Struct, (Task_FuncPtr)moveTask, &taskParams, NULL);
 
+    //initInt();
+
     // Turn on user LED
     GPIO_write(Board_LED0, Board_LED_ON);
 
     /* install Button callback */
-	GPIO_setCallback(Board_BUTTON0, brytarInt);
+	//GPIO_setCallback(Board_BUTTON0, brytarInt);
 
 	/* Enable interrupts */
-	GPIO_enableInt(Board_BUTTON0);
+	//GPIO_enableInt(Board_BUTTON0);
 
+	/* install Button callback */
+	GPIO_setCallback(BOARD_INT0, brytarIntYO);
+
+	/* Enable interrupts */
+	GPIO_enableInt(BOARD_INT0);
 
     System_printf("Starting the example\nSystem provider is set to SysMin. "
                   "Halt the target to view any SysMin contents in ROV.\n");

@@ -16,7 +16,7 @@ BIOS_INC  = -I"C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_0
 
 TARGET_INC = -I"C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/"
 
-INCS = $(BIOS_INC) $(TARGET_INC)  --include_path="C:/Users/Gabriel/Documents/GitHub/APA/CDIO_CC3200" --include_path="C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/CC3200_driverlib_1.1.0" --include_path="C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/CC3200_driverlib_1.1.0/inc" --include_path="C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/CC3200_driverlib_1.1.0/driverlib" --include_path="C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/include" 
+INCS = $(BIOS_INC) $(TARGET_INC)  --include_path="C:/Users/Gabriel/Documents/GitHub/APA/CC3200_TEST" --include_path="C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/CC3200_driverlib_1.1.0" --include_path="C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/CC3200_driverlib_1.1.0/inc" --include_path="C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/CC3200_driverlib_1.1.0/driverlib" --include_path="C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/include" 
 
 CC = C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/bin/armcl -c $(CCOPTS) -I C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/include
 ASM = C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/bin/armcl -c $(CCOPTS) -I C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/include

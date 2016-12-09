@@ -17237,7 +17237,7 @@ __o = __obj[1014]
     __o['cfgArgs'] = null
     __o['cfgArgsEncoded'] = true
     __o['cfgHome'] = String(java.net.URLDecoder.decode('configPkg', 'UTF-8'))
-    __o['cfgScript'] = String(java.net.URLDecoder.decode('C%3A%2FUsers%2FGabriel%2Fworkspace_v6_2%2FCDIO_CC3200%2FCDIO_CC3200.cfg', 'UTF-8'))
+    __o['cfgScript'] = String(java.net.URLDecoder.decode('C%3A%2FUsers%2FGabriel%2FDocuments%2FGitHub%2FAPA%2FCDIO_CC3200%2FCDIO_CC3200.cfg', 'UTF-8'))
     __o['prelink'] = false
     __o['profile'] = String(java.net.URLDecoder.decode('release', 'UTF-8'))
     __o['releases'] = __obj[1015.0]
@@ -17348,7 +17348,7 @@ __o = __obj[1027]  // ti.targets.arm.elf.M4/ccConfigOpts
 __o = __obj[1028]  // ti.targets.arm.elf.M4/ccOpts
     __o['$category'] = String(java.net.URLDecoder.decode('Struct', 'UTF-8'))
     __o['$name'] = String(java.net.URLDecoder.decode('ti.targets.arm.elf.M4%2FccOpts', 'UTF-8'))
-    __o['prefix'] = String(java.net.URLDecoder.decode('-mv7M4+--code_state%3D16+--float_support%3Dvfplib+-me+--include_path%3D%22C%3A%2FUsers%2FGabriel%2Fworkspace_v6_2%2FCDIO_CC3200%22+--include_path%3D%22C%3A%2Fti%2Ftirex-content%2Ftirtos_cc32xx_2_16_00_08%2Fproducts%2FCC3200_driverlib_1.1.0%22+--include_path%3D%22C%3A%2Fti%2Ftirex-content%2Ftirtos_cc32xx_2_16_00_08%2Fproducts%2FCC3200_driverlib_1.1.0%2Finc%22+--include_path%3D%22C%3A%2Fti%2Ftirex-content%2Ftirtos_cc32xx_2_16_00_08%2Fproducts%2FCC3200_driverlib_1.1.0%2Fdriverlib%22+--include_path%3D%22C%3A%2Fti%2Fccsv62%2Fccsv6%2Ftools%2Fcompiler%2Farm_15.12.3.LTS%2Finclude%22+-g+--define%3Dcc3200+--define%3DPART_CC3200+--define%3Dccs+--define%3DCCWARE+--diag_wrap%3Doff+--diag_warning%3D225+--diag_warning%3D255+--display_error_number+--gen_func_subsections%3Don+--abi%3Deabi+++-qq+-pdsw225', 'UTF-8'))
+    __o['prefix'] = String(java.net.URLDecoder.decode('-mv7M4+--code_state%3D16+--float_support%3Dvfplib+-me+--include_path%3D%22C%3A%2FUsers%2FGabriel%2FDocuments%2FGitHub%2FAPA%2FCDIO_CC3200%22+--include_path%3D%22C%3A%2Fti%2Ftirex-content%2Ftirtos_cc32xx_2_16_00_08%2Fproducts%2FCC3200_driverlib_1.1.0%22+--include_path%3D%22C%3A%2Fti%2Ftirex-content%2Ftirtos_cc32xx_2_16_00_08%2Fproducts%2FCC3200_driverlib_1.1.0%2Finc%22+--include_path%3D%22C%3A%2Fti%2Ftirex-content%2Ftirtos_cc32xx_2_16_00_08%2Fproducts%2FCC3200_driverlib_1.1.0%2Fdriverlib%22+--include_path%3D%22C%3A%2Fti%2Fccsv62%2Fccsv6%2Ftools%2Fcompiler%2Farm_15.12.3.LTS%2Finclude%22+-g+--define%3Dcc3200+--define%3DPART_CC3200+--define%3Dccs+--define%3DCCWARE+--diag_wrap%3Doff+--diag_warning%3D225+--diag_warning%3D255+--display_error_number+--gen_func_subsections%3Don+--abi%3Deabi+++-qq+-pdsw225', 'UTF-8'))
     __o['suffix'] = String(java.net.URLDecoder.decode('', 'UTF-8'))
 
 __o = __obj[1029]  // ti.targets.arm.elf.M4/compatibleSuffixes

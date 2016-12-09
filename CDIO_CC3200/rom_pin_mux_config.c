@@ -63,6 +63,17 @@ void PinMuxConfig(void)
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA1, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA2, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA3, PRCM_RUN_MODE_CLK);
+	MAP_PRCMPeripheralClkEnable(PRCM_UARTA1, PRCM_RUN_MODE_CLK);
+
+	//
+    // Configure PIN_07 for UART1 UART1_TX
+    //
+	MAP_PinTypeUART(PIN_07, PIN_MODE_5);
+
+	//
+    // Configure PIN_08 for UART1 UART1_RX
+    //
+	MAP_PinTypeUART(PIN_08, PIN_MODE_5);
 
 	//
 	// Configure PIN_01 for GPIO Output
@@ -116,11 +127,58 @@ void PinMuxConfig(void)
 	//
 	MAP_PinTypeTimer(PIN_64, PIN_MODE_3);
 
+
 	//
-    // Configure PIN_15 for GPIO Input
+    // Configure PIN_15 for GPIO Input - Switch 4
     //
+	//MAP_PinTypeGPIO(PIN_15, PIN_MODE_0, false);
+	//MAP_GPIODirModeSet(GPIOA2_BASE, 0x40, GPIO_DIR_MODE_IN);
+
+/*
+	//
+	// Configure PIN_16 for GPIO Input - Switch 1
+	//
+	MAP_PinTypeGPIO(PIN_16, PIN_MODE_0, false);
+	unsigned int GPIO23Port = 0;
+	unsigned char GPIO23Pin;
+	GPIO_IF_GetPortNPin(23, &GPIO23Port, &GPIO23Pin);
+	MAP_GPIODirModeSet(GPIO23Port, GPIO23Pin, GPIO_DIR_MODE_IN);
+
+
+	//
+	// Configure PIN_17 for GPIO Input - Switch 2
+	//
+	MAP_PinTypeGPIO(PIN_17, PIN_MODE_0, false);
+	unsigned int GPIO24Port = 0;
+	unsigned char GPIO24Pin;
+	GPIO_IF_GetPortNPin(24, &GPIO24Port, &GPIO24Pin);
+	MAP_GPIODirModeSet(GPIO24Port, GPIO24Pin, GPIO_DIR_MODE_IN);
+
+*/
+	//
+	// Configure PIN_55 for GPIO Input - Switch 3
+	//
+	MAP_PinTypeGPIO(PIN_55, PIN_MODE_0, false);
+	unsigned int GPIO1Port = 0;
+	unsigned char GPIO1Pin;
+	GPIO_IF_GetPortNPin(1, &GPIO1Port, &GPIO1Pin);
+	MAP_GPIODirModeSet(GPIO1Port, GPIO1Pin, GPIO_DIR_MODE_IN);
+	// Activate internal pull-down resistor
+	MAP_PinConfigSet(PIN_55, PIN_STRENGTH_6MA, PIN_TYPE_STD_PD);
+
+
+
+
+	//
+	// Configure PIN_15 for GPIO Input - Switch 4
+	//
 	MAP_PinTypeGPIO(PIN_15, PIN_MODE_0, false);
-	MAP_GPIODirModeSet(GPIOA2_BASE, 0x40, GPIO_DIR_MODE_IN);
+	unsigned int GPIO22Port = 0;
+	unsigned char GPIO22Pin;
+	GPIO_IF_GetPortNPin(22, &GPIO22Port, &GPIO22Pin);
+	MAP_GPIODirModeSet(GPIO22Port, GPIO22Pin, GPIO_DIR_MODE_IN);
+	// Activate internal pull-down resistor
+	//MAP_PinConfigSet(PIN_15, PIN_STRENGTH_4MA, PIN_TYPE_STD_PD);
 
 
 }
