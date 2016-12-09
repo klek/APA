@@ -49,6 +49,8 @@
 // #include <ti/drivers/UART.h>
 // #include <ti/drivers/Watchdog.h>
 
+#include "hw_memmap.h"
+#include "rom_map.h"
 
 /* Example/Board Header files */
 #include "Board.h"
@@ -69,7 +71,7 @@ Void heartBeatFxn(UArg arg0, UArg arg1)
 {
     while (1) {
         Task_sleep((UInt)arg0);
-        GPIO_toggle(Board_LED0);
+        //GPIO_toggle(Board_LED0);
     }
 }
 
@@ -83,6 +85,7 @@ void brytarIntYO(unsigned int index)
 
     //GPIO_toggle(Board_LED0);
 
+	//MAP_GPIOIntClear(GPIOA0_BASE, 0x2);
     if (count++ == 1) {
         count = 0;
     }
@@ -112,13 +115,15 @@ int main(void)
     Task_construct(&task0Struct, (Task_FuncPtr)heartBeatFxn, &taskParams, NULL);
 
     /* Turn on user LED */
-    GPIO_write(Board_LED0, Board_LED_ON);
+    //GPIO_write(Board_LED0, Board_LED_ON);
 
 	/* install Button callback */
-	GPIO_setCallback(BOARD_INT0, brytarIntYO);
+	//GPIO_setCallback(BOARD_INT0, brytarIntYO);
+	GPIO_setCallback(BOARD_INT1, brytarIntYO);
 
 	/* Enable interrupts */
-	GPIO_enableInt(BOARD_INT0);
+	//GPIO_enableInt(BOARD_INT0);
+	GPIO_enableInt(BOARD_INT1);
 
     System_printf("Starting the example\nSystem provider is set to SysMin. "
                   "Halt the target to view any SysMin contents in ROV.\n");

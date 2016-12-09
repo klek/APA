@@ -63,9 +63,10 @@ Char task0Stack[TASKSTACKSIZE];
 
 void init_step();
 void initInt();
-void brytarInt();
-//void brytarInt(unsigned int index);
-void brytarIntYO(unsigned int index);
+//void brytarInt();
+void brytarInt(unsigned int index);
+//void brytarIntYO(unsigned int index);
+void brytarIntYO();
 static void move(unsigned char direction);
 void charToInt(char coord[], int *xStart, int *yStart, int *xEnd, int *yEnd, int *zPos);
 
@@ -97,9 +98,9 @@ void brytarInt(unsigned int index)
     if (count++ == 1) {
         count = 0;
     }
-
-
 }
+
+//void brytarIntYO()
 void brytarIntYO(unsigned int index)
 {
 	/* Stop the motors in this direction */
@@ -425,8 +426,8 @@ void initInt()
 	IntPendClear(INT_GPIOA0);
 	IntEnable(INT_GPIOA0); // For GPIO1
 	GPIOIntEnable(GPIO1Port,GPIO1Pin); // For GPIO1
-
 */
+
 	/*
 	// Init interrupt for GPIO23 - Pin16
 	unsigned int GPIO24Port = 0;
@@ -476,7 +477,7 @@ int main(void)
     //initInt();
 
     // Turn on user LED
-    GPIO_write(Board_LED0, Board_LED_ON);
+    //GPIO_write(Board_LED0, Board_LED_ON);
 
     /* install Button callback */
 	//GPIO_setCallback(Board_BUTTON0, brytarInt);
@@ -486,9 +487,11 @@ int main(void)
 
 	/* install Button callback */
 	GPIO_setCallback(BOARD_INT0, brytarIntYO);
+	GPIO_setCallback(BOARD_INT1, brytarInt);
 
 	/* Enable interrupts */
 	GPIO_enableInt(BOARD_INT0);
+	GPIO_enableInt(BOARD_INT1);
 
     System_printf("Starting the example\nSystem provider is set to SysMin. "
                   "Halt the target to view any SysMin contents in ROV.\n");

@@ -56,14 +56,34 @@
 //*****************************************************************************
 void PinMuxConfig(void)
 {
+    //
+    // Set unused pins to PIN_MODE_0 with the exception of JTAG pins 16,17,19,20
+    //
+    MAP_PinModeSet(PIN_05, PIN_MODE_0);
+    MAP_PinModeSet(PIN_06, PIN_MODE_0);
+    MAP_PinModeSet(PIN_07, PIN_MODE_0);
+    MAP_PinModeSet(PIN_08, PIN_MODE_0);
+    MAP_PinModeSet(PIN_18, PIN_MODE_0);
+    MAP_PinModeSet(PIN_21, PIN_MODE_0);
+    MAP_PinModeSet(PIN_45, PIN_MODE_0);
+    MAP_PinModeSet(PIN_53, PIN_MODE_0);
+    MAP_PinModeSet(PIN_57, PIN_MODE_0);
+    MAP_PinModeSet(PIN_58, PIN_MODE_0);
+    MAP_PinModeSet(PIN_59, PIN_MODE_0);
+    MAP_PinModeSet(PIN_60, PIN_MODE_0);
+    MAP_PinModeSet(PIN_61, PIN_MODE_0);
+    MAP_PinModeSet(PIN_63, PIN_MODE_0);
+
 	//
     // Enable Peripheral Clocks
     //
+	MAP_PRCMPeripheralClkEnable(PRCM_TIMERA2, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA0, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA1, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA2, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA3, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_UARTA1, PRCM_RUN_MODE_CLK);
+
 
 	//
     // Configure PIN_07 for UART1 UART1_TX
@@ -164,7 +184,7 @@ void PinMuxConfig(void)
 	GPIO_IF_GetPortNPin(1, &GPIO1Port, &GPIO1Pin);
 	MAP_GPIODirModeSet(GPIO1Port, GPIO1Pin, GPIO_DIR_MODE_IN);
 	// Activate internal pull-down resistor
-	MAP_PinConfigSet(PIN_55, PIN_STRENGTH_6MA, PIN_TYPE_STD_PD);
+	//MAP_PinConfigSet(PIN_55, PIN_STRENGTH_6MA, PIN_TYPE_STD_PD);
 
 
 

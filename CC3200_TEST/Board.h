@@ -64,6 +64,7 @@ extern "C" {
 #define Board_BUTTON0                CC3200_LAUNCHXL_SW2
 #define Board_BUTTON1                CC3200_LAUNCHXL_SW3
 #define BOARD_INT0				 	 CC3200_LAUNCHXL_GPIO1
+#define BOARD_INT1					 CC3200_LAUNCHXL_GPIO28
 
 #define Board_I2C0                   CC3200_LAUNCHXL_I2C0
 #define Board_I2C_TMP                CC3200_LAUNCHXL_I2C0

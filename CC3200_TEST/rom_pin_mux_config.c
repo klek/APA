@@ -58,14 +58,26 @@ void PinMuxConfig(void)
 	//
     // Enable Peripheral Clocks
     //
+	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA0, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA1, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA2, PRCM_RUN_MODE_CLK);
+	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA3, PRCM_RUN_MODE_CLK);
 
     //
     // Configure PIN_55 for GPIO Input
     //
-    MAP_PinTypeGPIO(PIN_55, PIN_MODE_0, false);
-    MAP_GPIODirModeSet(GPIOA0_BASE, 0x2, GPIO_DIR_MODE_IN);
+    //MAP_PinTypeGPIO(PIN_55, PIN_MODE_0, false);
+    //MAP_GPIODirModeSet(GPIOA0_BASE, 0x2, GPIO_DIR_MODE_IN);
+    // Activate internal pull-down resistor
+	//MAP_PinConfigSet(PIN_55, PIN_STRENGTH_6MA, PIN_TYPE_STD_PD);
+
+    // Test PIN_18
+	MAP_PinTypeGPIO(PIN_18, PIN_MODE_0, false);
+	unsigned int GPIO28Port = 0;
+	unsigned char GPIO28Pin;
+	GPIO_IF_GetPortNPin(28, &GPIO28Port, &GPIO28Pin);
+	MAP_GPIODirModeSet(GPIO28Port, GPIO28Pin, GPIO_DIR_MODE_IN);
+
 
 	//
     // Configure PIN_64 for GPIO Output
