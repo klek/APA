@@ -65,8 +65,8 @@ void init_step();
 void initInt();
 //void brytarInt();
 void brytarInt(unsigned int index);
-//void brytarIntYO(unsigned int index);
-void brytarIntYO();
+void brytarIntYO(unsigned int index);
+//void brytarIntYO();
 static void move(unsigned char direction);
 void charToInt(char coord[], int *xStart, int *yStart, int *xEnd, int *yEnd, int *zPos);
 
@@ -120,8 +120,8 @@ void moveTask(UArg arg0, UArg arg1)
 {
 	UART_Handle uart;
 	UART_Params uartParams;
-    //PWM_Handle pwm1;
-    //PWM_Params params;
+    PWM_Handle pwm1;
+    PWM_Params params;
 
 	// Get port and pins
 	unsigned int GPIO7Port = 0; // Direction right motor
@@ -152,17 +152,17 @@ void moveTask(UArg arg0, UArg arg1)
 	uartParams.readReturnMode = UART_RETURN_FULL;
 	uartParams.readEcho = UART_ECHO_ON;
 	uartParams.baudRate = 9600;
-	uart = UART_open(Board_UART1, &uartParams);
+	uart = UART_open(Board_UART0, &uartParams);
 
 	/* Initiate the PWM */
-    /*uint16_t   pwmPeriod = 20;      // Period and duty in microseconds
-    uint16_t   duty = 0;
+    uint16_t   pwmPeriod = 20000;      // Period and duty in microseconds
+    uint16_t   duty = 1000;
     PWM_Params_init(&params);
     params.period = pwmPeriod;
     pwm1 = PWM_open(Board_PWM0, &params);
     if (pwm1 == NULL) {
     	System_abort("Board_PWM0 did not open");
-    }*/
+    }
 
 
 	if (uart == NULL)
@@ -271,6 +271,20 @@ void moveTask(UArg arg0, UArg arg1)
     			GPIO_IF_Set(10, GPIO10Port, GPIO10Pin, 1); // Step - Pin 1 GP10
     			MAP_UtilsDelay(40000);
     			GPIO_IF_Set(10, GPIO10Port, GPIO10Pin, 0); // Step - Pin 1 GP10
+
+    			break;
+
+    		case 'z':
+
+    			if (duty > 2000)
+    			{
+    				duty = 1000;
+    			}
+    			else
+    			{
+    				duty += 500;
+    			}
+    			PWM_setDuty(pwm1, duty);
 
     			break;
 
@@ -477,7 +491,7 @@ int main(void)
     //initInt();
 
     // Turn on user LED
-    //GPIO_write(Board_LED0, Board_LED_ON);
+    GPIO_write(Board_LED0, Board_LED_ON);
 
     /* install Button callback */
 	//GPIO_setCallback(Board_BUTTON0, brytarInt);
@@ -486,8 +500,8 @@ int main(void)
 	//GPIO_enableInt(Board_BUTTON0);
 
 	/* install Button callback */
-	GPIO_setCallback(BOARD_INT0, brytarIntYO);
-	GPIO_setCallback(BOARD_INT1, brytarInt);
+	GPIO_setCallback(BOARD_INT0, brytarIntYO); // GPIO28 - Pin 18
+	GPIO_setCallback(BOARD_INT1, brytarInt); // GPIO22 - Pin 15
 
 	/* Enable interrupts */
 	GPIO_enableInt(BOARD_INT0);

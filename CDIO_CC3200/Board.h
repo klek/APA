@@ -63,7 +63,7 @@ extern "C" {
 #define Board_LED2                   CC3200_LAUNCHXL_LED_D7
 #define Board_BUTTON0                CC3200_LAUNCHXL_SW2
 #define Board_BUTTON1                CC3200_LAUNCHXL_SW3
-#define BOARD_INT0				 	 CC3200_LAUNCHXL_GPIO1
+#define BOARD_INT0				 	 CC3200_LAUNCHXL_GPIO28
 #define BOARD_INT1					 CC3200_LAUNCHXL_GPIO22
 
 #define Board_I2C0                   CC3200_LAUNCHXL_I2C0
@@ -71,7 +71,7 @@ extern "C" {
 
 #define Board_I2S0                   CC3200_LAUNCHXL_I2S0
 
-#define Board_PWM0                   CC3200_LAUNCHXL_PWM6
+#define Board_PWM0                   CC3200_LAUNCHXL_PWM5
 #define Board_PWM1                   CC3200_LAUNCHXL_PWM7
 
 #define Board_SDSPI0                 CC3200_LAUNCHXL_SDSPI0

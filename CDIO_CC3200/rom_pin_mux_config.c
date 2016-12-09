@@ -56,44 +56,38 @@
 //*****************************************************************************
 void PinMuxConfig(void)
 {
-    //
-    // Set unused pins to PIN_MODE_0 with the exception of JTAG pins 16,17,19,20
-    //
-    MAP_PinModeSet(PIN_05, PIN_MODE_0);
-    MAP_PinModeSet(PIN_06, PIN_MODE_0);
-    MAP_PinModeSet(PIN_07, PIN_MODE_0);
-    MAP_PinModeSet(PIN_08, PIN_MODE_0);
-    MAP_PinModeSet(PIN_18, PIN_MODE_0);
-    MAP_PinModeSet(PIN_21, PIN_MODE_0);
-    MAP_PinModeSet(PIN_45, PIN_MODE_0);
-    MAP_PinModeSet(PIN_53, PIN_MODE_0);
-    MAP_PinModeSet(PIN_57, PIN_MODE_0);
-    MAP_PinModeSet(PIN_58, PIN_MODE_0);
-    MAP_PinModeSet(PIN_59, PIN_MODE_0);
-    MAP_PinModeSet(PIN_60, PIN_MODE_0);
-    MAP_PinModeSet(PIN_61, PIN_MODE_0);
-    MAP_PinModeSet(PIN_63, PIN_MODE_0);
-
 	//
     // Enable Peripheral Clocks
     //
+	MAP_PRCMPeripheralClkEnable(PRCM_TIMERA1, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_TIMERA2, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA0, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA1, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA2, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA3, PRCM_RUN_MODE_CLK);
-	MAP_PRCMPeripheralClkEnable(PRCM_UARTA1, PRCM_RUN_MODE_CLK);
+	MAP_PRCMPeripheralClkEnable(PRCM_UARTA0, PRCM_RUN_MODE_CLK);
 
-
-	//
-    // Configure PIN_07 for UART1 UART1_TX
+/*
     //
-	MAP_PinTypeUART(PIN_07, PIN_MODE_5);
-
-	//
-    // Configure PIN_08 for UART1 UART1_RX
+    // Configure PIN_52 for UART0 UART0_RTS
     //
-	MAP_PinTypeUART(PIN_08, PIN_MODE_5);
+    MAP_PinTypeUART(PIN_52, PIN_MODE_6);
+
+    //
+    // Configure PIN_50 for UART0 UART0_CTS
+    //
+    MAP_PinTypeUART(PIN_50, PIN_MODE_12);
+
+    //
+    // Configure PIN_03 for UART0 UART0_TX
+    //
+    MAP_PinTypeUART(PIN_03, PIN_MODE_7);
+
+    //
+    // Configure PIN_04 for UART0 UART0_RX
+    //
+    MAP_PinTypeUART(PIN_04, PIN_MODE_7);
+*/
 
 	//
 	// Configure PIN_01 for GPIO Output
@@ -175,6 +169,7 @@ void PinMuxConfig(void)
 	MAP_GPIODirModeSet(GPIO24Port, GPIO24Pin, GPIO_DIR_MODE_IN);
 
 */
+/*
 	//
 	// Configure PIN_55 for GPIO Input - Switch 3
 	//
@@ -186,7 +181,18 @@ void PinMuxConfig(void)
 	// Activate internal pull-down resistor
 	//MAP_PinConfigSet(PIN_55, PIN_STRENGTH_6MA, PIN_TYPE_STD_PD);
 
+*/
 
+	//
+	// Configure PIN_18 for GPIO Input - Switch 3
+	//
+	MAP_PinTypeGPIO(PIN_18, PIN_MODE_0, false);
+	unsigned int GPIO28Port = 0;
+	unsigned char GPIO28Pin;
+	GPIO_IF_GetPortNPin(28, &GPIO28Port, &GPIO28Pin);
+	MAP_GPIODirModeSet(GPIO28Port, GPIO28Pin, GPIO_DIR_MODE_IN);
+	// Activate internal pull-down resistor
+	MAP_PinConfigSet(PIN_15, PIN_STRENGTH_4MA, PIN_TYPE_STD_PD);
 
 
 	//
