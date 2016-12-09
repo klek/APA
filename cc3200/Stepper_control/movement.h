@@ -12,6 +12,15 @@
 /*
  * Structs
  */
+// The struct for movement
+struct position {
+    // NOTE(klek): What do we need?
+    // Should simply contain my position in x and y
+    // could also contain the value for steps??
+
+    unsigned int xPosition;
+    unsigned int yPosition;
+};
 
 // Possible direction for the move-function
 enum directions {
@@ -37,6 +46,9 @@ void move(unsigned char direction);
 
 // Activates the pen (pushes it down onto the paper)
 void activatePen(void);
+
+// Deactivates the pen (lifts it from the paper)
+void deactivatePen(void);
 
 // Checks the position of the pen
 unsigned char checkPen(void);

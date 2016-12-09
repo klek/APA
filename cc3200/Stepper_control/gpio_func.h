@@ -14,23 +14,27 @@
  */
 
 // Pin definitions for the steppers
-#define R_MOTOR_DIR_PIN  7   // GPIO7
-#define L_MOTOR_DIR_PIN  11  // GPIO11
-#define MOTOR_STEP_PIN   10  // GPIO10
+#define R_MOTOR_DIR_PIN  7   // GPIO7 - PIN62
+#define L_MOTOR_DIR_PIN  11  // GPIO11 - PIN02
+#define MOTOR_STEP_PIN   10  // GPIO10 - PIN01
 
 // Pin definitions for homing switches
-#define HOME_X_AXIS      22  // GPIO22 - Brytare 4
-#define HOME_Y_AXIS      1   // GPIO1 - Brytare 3
-#define END_X_AXIS       24  // GPIO24 - Brytare 2
-#define END_Y_AXIS       23  // GPIO23 - Brytare 1
+#define HOME_X_AXIS      22  // GPIO22 - PIN15 - Brytare 4
+#define HOME_Y_AXIS      28  // GPIO1 - PIN55 - Brytare 3
+#define END_X_AXIS       24  // GPIO24 - PIN17 - Brytare 2
+#define END_Y_AXIS       23  // GPIO23 - PIN16 - Brytare 1
 
 // Pin definitions for PWM module
-#define PWM_SERVO        9   // GPIO
+#define PWM_SERVO        9   // GPIO9 - PIN64
 
 
 /*
  * Function prototypes
  */
+
+// Pinmux config for the project
+// Enables and configures the pins used by the printer
+void pinMuxConfig(void);
 
 // Sets the corresponding pin to high
 void gpioSetPin(unsigned char pinNr);
@@ -39,7 +43,7 @@ void gpioSetPin(unsigned char pinNr);
 void gpioUnSetPin(unsigned char pinNr);
 
 // Gets the value on the corresponding pin
-void gpioGetPin(unsigned char pinNr);
+unsigned char gpioGetPin(unsigned char pinNr);
 
 // Pulses the corresponding pin - sets pin high, then low
 void gpioPulsePin(unsigned char pinNr, unsigned int delay);

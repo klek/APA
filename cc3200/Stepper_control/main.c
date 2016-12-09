@@ -122,8 +122,6 @@ extern uVectorEntry __vector_table;
 //*****************************************************************************
 //                 Function prototypes
 //*****************************************************************************
-static void PinMuxConfig(void);
-static void move(unsigned char direction);
 
 //*****************************************************************************
 // Variable related to Connection status
@@ -1121,15 +1119,15 @@ static void BoardInit(void)
 //****************************************************************************
 //                            MAIN FUNCTION
 //****************************************************************************
-void main()
+/*void main()
 {
     long lRetVal = -1;
 
-    //Board Initialization
+    // Board Initialization
     BoardInit();
 
-    //Pin Configuration
-    PinMuxConfig();
+    // Pin Configuration
+    pinMuxConfig();
 
     //Change Pin 58 Configuration from Default to Pull Down
     MAP_PinConfigSet(PIN_58,PIN_STRENGTH_2MA|PIN_STRENGTH_4MA,PIN_TYPE_STD_PD);
@@ -1183,39 +1181,4 @@ void main()
 
 }
 
-// Configuration of pins to be used
-static void PinMuxConfig(void)
-{
-    // Enable Peripheral Clocks
-    MAP_PRCMPeripheralClkEnable(PRCM_UARTA0, PRCM_RUN_MODE_CLK);
-    MAP_PRCMPeripheralClkEnable(PRCM_GPIOA0, PRCM_RUN_MODE_CLK);        // Needed? Are we using GPIOA0?
-    MAP_PRCMPeripheralClkEnable(PRCM_GPIOA1, PRCM_RUN_MODE_CLK);
-
-    /*********************************
-     *  UART-pins
-     *********************************/
-    // Configure PIN_55 for UART0 UART0_TX
-    MAP_PinTypeUART(PIN_55, PIN_MODE_3);
-    // Configure PIN_57 for UART0 UART0_RX
-    MAP_PinTypeUART(PIN_57, PIN_MODE_3);
-
-    // Configure PIN_64 for GPIOOutput
-//    MAP_PinTypeGPIO(PIN_64, PIN_MODE_0, false);
-//    MAP_GPIODirModeSet(GPIOA1_BASE, 0x2, GPIO_DIR_MODE_OUT);
-
-    MAP_PinTypeGPIO(PIN_63, PIN_MODE_0, false);
-    // Get port and pins
-    unsigned int GPIO8Port = 0;
-    unsigned char GPIO8Pin;
-    GPIO_IF_GetPortNPin(DIR2, &GPIO8Port, &GPIO8Pin);
-    MAP_GPIODirModeSet(GPIO8Port, GPIO8Pin, GPIO_DIR_MODE_OUT);
-
-    // Configure PIN_01 for GPIOOutput
-    MAP_PinTypeGPIO(PIN_01, PIN_MODE_0, false);
-    MAP_GPIODirModeSet(GPIOA1_BASE, 0x4, GPIO_DIR_MODE_OUT);
-
-    // Configure PIN_02 for GPIOOutput
-    MAP_PinTypeGPIO(PIN_02, PIN_MODE_0, false);
-    MAP_GPIODirModeSet(GPIOA1_BASE, 0x8, GPIO_DIR_MODE_OUT);
-}
-
+*/
