@@ -16,6 +16,7 @@
 #include "hw_memmap.h"
 #include "rom_map.h"
 #include "uart.h"
+#include "gpio.h"
 #include "interrupt.h"
 #include "prcm.h"
 
@@ -66,7 +67,9 @@ static unsigned char status;
  * Function prototypes
  */
 // Interrupt handler for homing-switches
-static void homingHandler(void);
+static void xAxisHandler(void);
+
+static void yAxisHandler(void);
 
 // Initialize the components of the board
 static void boardInit(void);
@@ -117,16 +120,17 @@ void main(void)
      * Create interrupts
      */
     // Create the interrupt for HOME_X_AXIS
-    retVal = osi_InterruptRegister(gpioGetIntBase(HOME_X_AXIS),homingHandler, INTERRUPT_PRIORITY);
+    retVal = osi_InterruptRegister(gpioGetIntBase(HOME_X_AXIS), xAxisHandler, INTERRUPT_PRIORITY);
     if ( retVal < 0 ) {
         Report("Failed to register the interrupts");
         while(1);
     }
 
     // Create the interrupt for HOME_Y_AXIS
-    retVal = osi_InterruptRegister(gpioGetIntBase(HOME_Y_AXIS), homingHandler, INTERRUPT_PRIORITY);
+    retVal = osi_InterruptRegister(gpioGetIntBase(HOME_Y_AXIS), yAxisHandler, INTERRUPT_PRIORITY);
     if ( retVal < 0 ) {
         Report("Failed to register the interrupts");
+        while(1);
     }
     // Enable both interrupts
     gpioEnableInterrupts();
@@ -187,13 +191,34 @@ static void displayBanner(void)
     Report("\n\n\n\r");
 }
 
-// Interrupt handler for homing-switches
-static void homingHandler(void)
+// Interrupt handler for x-axis switch
+static void xAxisHandler(void)
 {
     // Get which pins gave the interrupt
-//    unsigned long pinState = GPIOIntStatus();
+    unsigned long pinState = GPIOIntStatus(GPIOA2_BASE, 1);
 
-    while(1);
+    // Check which pin gave interrupt
+    if ( pinState & HOME_X_AXIS ) {
+        while(1);
+    }
+}
+
+// Interrupt handler for y-axis switch
+static void yAxisHandler(void)
+{
+    // Get which pins gave the interrupt
+    unsigned long pinState = GPIOIntStatus(GPIOA3_BASE, 1);
+
+    // Check which pin gave interrupt
+    if ( pinState & HOME_Y_AXIS ) {
+        while(1);
+    }
+    else if ( pinState & HOME_X_AXIS ) {
+        while(1);
+    }
+    else {
+        while(1);
+    }
 }
 
 // This task should move printer head to homing position
