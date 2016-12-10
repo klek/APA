@@ -11,6 +11,7 @@
 // Driverlib includes
 #include "hw_types.h"
 #include "hw_memmap.h"
+#include "hw_ints.h"
 #include "rom_map.h"
 #include "pin.h"
 #include "gpio.h"
@@ -27,6 +28,14 @@ static unsigned long ulReg[] =
     GPIOA2_BASE,
     GPIOA3_BASE,
     GPIOA4_BASE,
+};
+
+static unsigned long ulIntReg[] =
+{
+    INT_GPIOA0,
+    INT_GPIOA1,
+    INT_GPIOA2,
+    INT_GPIOA3
 };
 
 /*
@@ -54,9 +63,10 @@ void pinMuxConfig(void)
     
     // Enable Peripheral clocks
     MAP_PRCMPeripheralClkEnable(PRCM_UARTA0, PRCM_RUN_MODE_CLK);
-    MAP_PRCMPeripheralClkEnable(PRCM_GPIOA0, PRCM_RUN_MODE_CLK);        // Needed? Are we using GPIOA0?
+    MAP_PRCMPeripheralClkEnable(PRCM_GPIOA0, PRCM_RUN_MODE_CLK);
     MAP_PRCMPeripheralClkEnable(PRCM_GPIOA1, PRCM_RUN_MODE_CLK);
-    MAP_PRCMPeripheralClkEnable(PRCM_GPIOA1, PRCM_RUN_MODE_CLK);
+    MAP_PRCMPeripheralClkEnable(PRCM_GPIOA2, PRCM_RUN_MODE_CLK);
+    MAP_PRCMPeripheralClkEnable(PRCM_GPIOA3, PRCM_RUN_MODE_CLK);
     MAP_PRCMPeripheralClkEnable(PRCM_TIMERA1, PRCM_RUN_MODE_CLK);
 
     /*
@@ -91,12 +101,14 @@ void pinMuxConfig(void)
     // HOME_X_AXIS setup as input GPIO
     MAP_PinTypeGPIO(PIN_15, PIN_MODE_0, false);
     gpioGetPortNPin(HOME_X_AXIS, &gpioPort, &gpioPin);
-//    MAP_GPIODirModeSet(gpioPort, gpioPin, GPIO_DIR_MODE_IN);
+    MAP_GPIODirModeSet(gpioPort, gpioPin, GPIO_DIR_MODE_IN);
+    MAP_GPIOIntTypeSet(gpioPort, gpioPin, GPIO_RISING_EDGE | GPIO_HIGH_LEVEL);
 
     // HOME_Y_AXIS setup as input GPIO
     MAP_PinTypeGPIO(PIN_18, PIN_MODE_0, false);
     gpioGetPortNPin(HOME_Y_AXIS, &gpioPort, &gpioPin);
-//    MAP_GPIODirModeSet(gpioPort, gpioPin, GPIO_DIR_MODE_IN);
+    MAP_GPIODirModeSet(gpioPort, gpioPin, GPIO_DIR_MODE_IN);
+    MAP_GPIOIntTypeSet(gpioPort, gpioPin, GPIO_RISING_EDGE | GPIO_HIGH_LEVEL);
 
     // NOTE(klek): Configuring this will remove the possibility to debug the device
     //             cause this is one of the JTAG-pins
@@ -173,4 +185,29 @@ void gpioTogglePin(unsigned char pinNr)
     else {
         gpioSetPin(pinNr);
     }
+}
+
+// Setups interrupt
+void gpioEnableInterrupts(void)
+{
+    // Variables to set-up pin-configs
+    unsigned int gpioPort = 0;
+    unsigned char gpioPin = 0;
+
+    // Enable HOME_X_AXIS
+    gpioGetPortNPin(HOME_X_AXIS, &gpioPort, &gpioPin);
+    MAP_GPIOIntClear(gpioPort, gpioPin);
+    MAP_GPIOIntEnable(gpioPort, gpioPin);
+
+    // Enable HOME_Y_AXIS
+    gpioGetPortNPin(HOME_Y_AXIS, &gpioPort, &gpioPin);
+    MAP_GPIOIntClear(gpioPort, gpioPin);
+    MAP_GPIOIntEnable(gpioPort, gpioPin);
+    
+}
+
+// Return the interrupt port for the specified input
+int gpioGetIntBase(unsigned char pinNr)
+{
+    return (ulIntReg[pinNr / 8]);
 }

@@ -41,6 +41,8 @@
 #define INIT_TASK_STACK_SIZE      (512)
 #define OOB_TASK_PRIORITY         (1)
 
+#define INTERRUPT_PRIORITY        10
+
 #define X_HOME                    (1 << 0)
 #define Y_HOME                    (1 << 1)
 
@@ -63,6 +65,9 @@ static unsigned char status;
 /*
  * Function prototypes
  */
+// Interrupt handler for homing-switches
+static void homingHandler(void);
+
 // Initialize the components of the board
 static void boardInit(void);
 
@@ -112,7 +117,19 @@ void main(void)
      * Create interrupts
      */
     // Create the interrupt for HOME_X_AXIS
-//    retVal = osi_InterruptRegister();
+    retVal = osi_InterruptRegister(gpioGetIntBase(HOME_X_AXIS),homingHandler, INTERRUPT_PRIORITY);
+    if ( retVal < 0 ) {
+        Report("Failed to register the interrupts");
+        while(1);
+    }
+
+    // Create the interrupt for HOME_Y_AXIS
+    retVal = osi_InterruptRegister(gpioGetIntBase(HOME_Y_AXIS), homingHandler, INTERRUPT_PRIORITY);
+    if ( retVal < 0 ) {
+        Report("Failed to register the interrupts");
+    }
+    // Enable both interrupts
+    gpioEnableInterrupts();
     
     /*
      *Create tasks
@@ -171,10 +188,12 @@ static void displayBanner(void)
 }
 
 // Interrupt handler for homing-switches
-static void interruptHandler(void)
+static void homingHandler(void)
 {
     // Get which pins gave the interrupt
 //    unsigned long pinState = GPIOIntStatus();
+
+    while(1);
 }
 
 // This task should move printer head to homing position

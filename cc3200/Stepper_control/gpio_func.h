@@ -52,5 +52,9 @@ void gpioPulsePin(unsigned char pinNr, unsigned int delay);
 void gpioTogglePin(unsigned char pinNr);
 
 // Setups interrupt
+void gpioEnableInterrupts(void);
+
+// Return the interrupt port for the specified input
+int gpioGetIntBase(unsigned char pinNr);
 
 #endif
