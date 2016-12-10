@@ -14,13 +14,13 @@
  */
 
 // Pin definitions for the steppers
-#define R_MOTOR_DIR_PIN  7   // GPIO7 - PIN62
-#define L_MOTOR_DIR_PIN  11  // GPIO11 - PIN02
+#define L_MOTOR_DIR_PIN  7   // GPIO7 - PIN62
+#define R_MOTOR_DIR_PIN  11  // GPIO11 - PIN02
 #define MOTOR_STEP_PIN   10  // GPIO10 - PIN01
 
 // Pin definitions for homing switches
 #define HOME_X_AXIS      22  // GPIO22 - PIN15 - Brytare 4
-#define HOME_Y_AXIS      28  // GPIO1 - PIN55 - Brytare 3
+#define HOME_Y_AXIS      28  // GPIO1 - PIN18 - Brytare 3
 #define END_X_AXIS       24  // GPIO24 - PIN17 - Brytare 2
 #define END_Y_AXIS       23  // GPIO23 - PIN16 - Brytare 1
 
@@ -50,5 +50,7 @@ void gpioPulsePin(unsigned char pinNr, unsigned int delay);
 
 // Toggles the corresponding pin
 void gpioTogglePin(unsigned char pinNr);
+
+// Setups interrupt
 
 #endif

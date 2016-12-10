@@ -21,6 +21,7 @@
 
 // Simplelink includes
 #include "simplelink.h"
+#include "simplelink_func.h"
 
 // Free rtos / TI-RTOS includes
 #include "osi.h"
@@ -36,8 +37,12 @@
 /*
  * Macros
  */
-#define TASK_STACK_SIZE      (1024)
-#define OOB_TASK_PRIORITY    (1)
+#define WORK_TASK_STACK_SIZE      (2048)
+#define INIT_TASK_STACK_SIZE      (512)
+#define OOB_TASK_PRIORITY         (1)
+
+#define X_HOME                    (1 << 0)
+#define Y_HOME                    (1 << 1)
 
 /*
  * Global variables
@@ -50,7 +55,10 @@ extern void (* const g_pfnVectors[])(void);
  * Static variables (global)
  */
 // NOTE(klek): Maybe this should be in a separate file?
-static struct position myPos; 
+static struct position myPos;
+// Status variable to indicate interrupts
+// NOTE(klek): Maybe increase this one to keep track of when to get more data from web?
+static unsigned char status;
 
 /*
  * Function prototypes
@@ -61,8 +69,11 @@ static void boardInit(void);
 // Function to display banner on UART at startup
 static void displayBanner(void);
 
-// Function to test the stepping pattern
-static void steppingTask(void* params);
+// Task to initialize
+static void initTask(void* params);
+
+// This task is supposed to do all the work
+static void workTask(void* params);
 
 /*
  * The main function
@@ -87,15 +98,41 @@ void main(void)
     displayBanner();
 
     // Setup simplelink
-//    retVal = VStartSimpleLinkSpawnTask(SPAWN_TASK_PRIORITY);
-//    if ( retVal < 0 ) {
-//        Report("Unable to start simplelink spawn task\n\r");
-//        while(1);
-//    }
+    retVal = VStartSimpleLinkSpawnTask(SPAWN_TASK_PRIORITY);
+    if ( retVal < 0 ) {
+        Report("Unable to start simplelink spawn task\n\r");
+        while(1);
+    }
 
-    // Create tasks
-    retVal = osi_TaskCreate(steppingTask, (signed char*)"steppingTask",
-                            TASK_STACK_SIZE, NULL, OOB_TASK_PRIORITY, NULL);
+    /*
+     * Message queue for communication between tasks
+     */
+
+    /*
+     * Create interrupts
+     */
+    // Create the interrupt for HOME_X_AXIS
+//    retVal = osi_InterruptRegister();
+    
+    /*
+     *Create tasks
+     */
+    // Create init task
+//    retVal = osi_TaskCreate(initTask, (signed char*)"initTask",
+//                            INIT_TASK_STACK_SIZE, NULL, OOB_TASK_PRIORITY, NULL);
+    if ( retVal < 0 ) {
+        Report("Failed to create initTask");
+        while(1);
+    }
+    
+    // Create the main task
+    retVal = osi_TaskCreate(workTask, (signed char*)"workTask",
+                            WORK_TASK_STACK_SIZE, NULL, OOB_TASK_PRIORITY, NULL);
+    if ( retVal < 0 ) {
+        Report("Failed to create workTask");
+        while(1);
+    }
+
 
     // Start the OS scheduler
     osi_start();
@@ -133,31 +170,72 @@ static void displayBanner(void)
     Report("\n\n\n\r");
 }
 
-// Function to test the newly implemented functions
-static void steppingTask(void* params)
+// Interrupt handler for homing-switches
+static void interruptHandler(void)
 {
+    // Get which pins gave the interrupt
+//    unsigned long pinState = GPIOIntStatus();
+}
+
+// This task should move printer head to homing position
+// Then it should tell workTask about this (through message queue)
+// TODO(klek): Call this again when print is finished to calculate
+//             how much offset we have gained during the print
+static void initTask(void* params)
+{
+    // We should start by moving to homing position
+    // to be able to set our position to zero
+    // TODO(klek): Implement this function instead of loops
+    //goToPos(HOME, &myPos);
+
+    // Start by going to X_HOME
+    // Wait for status-flag X_HOME to come true in status reg
+    while ( !(status & X_HOME) ) {
+        move(NEG_X);
+    }
+    // We should now be at zero x-position
+    myPos.xPosition = 0;
+
+    // Follow up by going to Y_HOME
+    while ( !(status & Y_HOME) ) {
+        move(NEG_Y);
+    }
+    // We should now be at zero y-position
+    myPos.yPosition = 0;
+}
+
+
+// Function to test the newly implemented functions
+static void workTask(void* params)
+{
+    // Task setup
+ 
+    // After we have found the homing position
+    
+
+    
     int i = 0;
 
     while (1) {
-		// Go 20 steps in positive X direction
-		for (i = 0; i < 100; i++) {
-			move(POS_X);
-		}
+        // Go 20 steps in positive X direction
+        for (i = 0; i < 100; i++) {
+            move(POS_X);
+        }
 
-		// Go 20 steps in negative X direction
-		for (i = 0; i < 100; i++) {
-			move(NEG_X);
-		}
+        // Go 20 steps in negative X direction
+        for (i = 0; i < 100; i++) {
+            move(NEG_X);
+        }
 
-		// Go 20 steps in positive Y direction
-		for (i = 0; i < 100; i++) {
-			move(POS_Y);
-		}
+        // Go 20 steps in positive Y direction
+        for (i = 0; i < 100; i++) {
+            move(POS_Y);
+        }
 
-		// Go 20 steps in negative Y direction
-		for (i = 0; i < 100; i++) {
-			move(NEG_Y);
-		}
+        // Go 20 steps in negative Y direction
+        for (i = 0; i < 100; i++) {
+            move(NEG_Y);
+        }
     }
     // Wait here
 //    while (1);

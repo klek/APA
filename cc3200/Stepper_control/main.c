@@ -225,6 +225,7 @@ void vApplicationStackOverflowHook( OsiTaskHandle *pxTask,
 //! \return None
 //!
 //*****************************************************************************
+/*
 void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent)
 {
     if(!pWlanEvent)
@@ -410,6 +411,7 @@ void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent)
         break;
     }
 }
+*/
 
 //*****************************************************************************
 //
@@ -421,6 +423,7 @@ void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent)
 //! \return None
 //!
 //*****************************************************************************
+/*
 void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent)
 {
     if(!pNetAppEvent)
@@ -443,7 +446,7 @@ void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent)
             //Gateway IP address
             g_ulGatewayIP = pEventData->gateway;
 
-            /*UART_PRINT("[NETAPP EVENT] IP Acquired: IP=%d.%d.%d.%d , "
+            UART_PRINT("[NETAPP EVENT] IP Acquired: IP=%d.%d.%d.%d , "
             "Gateway=%d.%d.%d.%d\n\r",
             SL_IPV4_BYTE(pNetAppEvent->EventData.ipAcquiredV4.ip,3),
             SL_IPV4_BYTE(pNetAppEvent->EventData.ipAcquiredV4.ip,2),
@@ -453,7 +456,7 @@ void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent)
             SL_IPV4_BYTE(pNetAppEvent->EventData.ipAcquiredV4.gateway,2),
             SL_IPV4_BYTE(pNetAppEvent->EventData.ipAcquiredV4.gateway,1),
             SL_IPV4_BYTE(pNetAppEvent->EventData.ipAcquiredV4.gateway,0));
-            */
+
         }
         break;
 
@@ -496,6 +499,7 @@ void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent)
         break;
     }
 }
+*/
 
 //*****************************************************************************
 //
@@ -506,6 +510,7 @@ void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent)
 //! \return None
 //!
 //*****************************************************************************
+/*
 void SimpleLinkGeneralEventHandler(SlDeviceEvent_t *pDevEvent)
 {
     if(!pDevEvent)
@@ -521,6 +526,7 @@ void SimpleLinkGeneralEventHandler(SlDeviceEvent_t *pDevEvent)
                pDevEvent->EventData.deviceEvent.status,
                pDevEvent->EventData.deviceEvent.sender);
 }
+*/
 
 //*****************************************************************************
 //
@@ -531,6 +537,7 @@ void SimpleLinkGeneralEventHandler(SlDeviceEvent_t *pDevEvent)
 //! \return None
 //!
 //*****************************************************************************
+/*
 void SimpleLinkSockEventHandler(SlSockEvent_t *pSock)
 {
     //
@@ -538,6 +545,7 @@ void SimpleLinkSockEventHandler(SlSockEvent_t *pSock)
     //
 
 }
+*/
 
 //*****************************************************************************
 //
@@ -550,6 +558,7 @@ void SimpleLinkSockEventHandler(SlSockEvent_t *pSock)
 //! \return None
 //!
 //*****************************************************************************
+/*
 void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pSlHttpServerEvent,
                                SlHttpServerResponse_t *pSlHttpServerResponse)
 {
@@ -660,7 +669,7 @@ void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pSlHttpServerEvent,
           break;
     }
 }
-
+*/
 
 //*****************************************************************************
 //
