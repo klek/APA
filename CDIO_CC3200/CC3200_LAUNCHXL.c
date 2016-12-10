@@ -330,7 +330,7 @@ PWMTimerCC3200_Object pwmTimerCC3200Objects[CC3200_LAUNCHXL_PWMCOUNT];
 const PWMTimerCC3200_HWAttrs pwmTimerCC3200HWAttrs[CC3200_LAUNCHXL_PWMCOUNT] = {
     {    /* CC3200_LAUNCHXL_PWM5 */
         .baseAddr = TIMERA2_BASE,
-        .timer = TIMER_A
+        .timer = TIMER_B
     },
     {    /* CC3200_LAUNCHXL_PWM7 */
         .baseAddr = TIMERA3_BASE,

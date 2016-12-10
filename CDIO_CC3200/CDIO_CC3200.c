@@ -154,9 +154,11 @@ void moveTask(UArg arg0, UArg arg1)
 	uartParams.baudRate = 9600;
 	uart = UART_open(Board_UART0, &uartParams);
 
+
 	/* Initiate the PWM */
     uint16_t   pwmPeriod = 20000;      // Period and duty in microseconds
-    uint16_t   duty = 1000;
+    uint16_t   duty = 100;
+    uint16_t   dutyInc = 200;
     PWM_Params_init(&params);
     params.period = pwmPeriod;
     pwm1 = PWM_open(Board_PWM0, &params);
@@ -276,6 +278,23 @@ void moveTask(UArg arg0, UArg arg1)
 
     		case 'z':
 
+
+    			while (duty < pwmPeriod)
+    			{
+    				PWM_setDuty(pwm1, duty);
+    				//MAP_UtilsDelay(10000000);
+    				Task_sleep(500);
+    		        duty = (duty + dutyInc);
+
+    		        /*
+    		         if (duty == pwmPeriod || (!duty)) {
+    		            dutyInc = - dutyInc;
+    		        }
+    		        */
+
+    			}
+    			duty = 0;
+    			/*
     			if (duty > 2000)
     			{
     				duty = 1000;
@@ -285,7 +304,7 @@ void moveTask(UArg arg0, UArg arg1)
     				duty += 500;
     			}
     			PWM_setDuty(pwm1, duty);
-
+*/
     			break;
 
     		default:
@@ -406,61 +425,6 @@ static void move(unsigned char direction)
 
 }
 
-
-void initInt()
-{
-
-	//
-	// Enable Processor
-	//
-//	MAP_IntMasterEnable();
-//	MAP_IntEnable(FAULT_SYSTICK);
-
-//	PRCMCC3200MCUInit();
-/*
-	// Init interrupt for GPIO 22 - Pin 15
-	unsigned int GPIO22Port = 0;
-	unsigned char GPIO22Pin;
-	GPIO_IF_GetPortNPin(22, &GPIO22Port, &GPIO22Pin);
-	GPIOIntTypeSet(GPIO22Port,GPIO22Pin,GPIO_HIGH_LEVEL);
-	GPIOIntRegister(GPIO22Port,brytarInt);
-	GPIOIntClear(GPIO22Port,GPIO22Pin);
-	IntPendClear(INT_GPIOA2);
-
-
-	// Init interrupt for GPIO1 - Pin55
-	unsigned int GPIO1Port = 0;
-	unsigned char GPIO1Pin;
-	//unsigned int GPIO1Int;
-	GPIO_IF_GetPortNPin(1, &GPIO1Port, &GPIO1Pin);
-	//GPIO1Int = GetPeripheralIntNum(GPIO1Port);
-	GPIOIntTypeSet(GPIO1Port,GPIO1Pin,GPIO_HIGH_LEVEL);
-	GPIOIntRegister(GPIO1Port,brytarIntYO);
-	GPIOIntClear(GPIO1Port,GPIO1Pin);
-	IntPendClear(INT_GPIOA0);
-	IntEnable(INT_GPIOA0); // For GPIO1
-	GPIOIntEnable(GPIO1Port,GPIO1Pin); // For GPIO1
-*/
-
-	/*
-	// Init interrupt for GPIO23 - Pin16
-	unsigned int GPIO24Port = 0;
-	unsigned char GPIO24Pin;
-	//unsigned int GPIO1Int;
-	GPIO_IF_GetPortNPin(24, &GPIO24Port, &GPIO24Pin);
-	//GPIO1Int = GetPeripheralIntNum(GPIO1Port);
-	GPIOIntTypeSet(GPIO24Port,GPIO24Pin,GPIO_HIGH_LEVEL);
-	GPIOIntRegister(GPIO24Port,brytarIntYO);
-	GPIOIntClear(GPIO24Port,GPIO24Pin);
-	IntPendClear(INT_GPIOA3);
-	IntEnable(INT_GPIOA3); // For GPIO24
-	GPIOIntEnable(GPIO24Port,GPIO24Pin); // For GPIO24
-*/
-	//IntEnable(INT_GPIOA2); // For GPIO22 & GPIO23
-	//GPIOIntEnable(GPIO22Port,GPIO22Pin); // For GPIO22 & GPIO23
-
-
-}
 
 /*
  *  ======== main ========
