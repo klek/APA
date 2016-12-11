@@ -53,7 +53,7 @@ extern "C" {
 
 #define Board_LED_ON                 CC3200_LAUNCHXL_LED_ON
 #define Board_LED_OFF                CC3200_LAUNCHXL_LED_OFF
-#define Board_LED0                   CC3200_LAUNCHXL_LED_D7
+//#define Board_LED0                   CC3200_LAUNCHXL_LED_D7
  /*
   *  CC3200_LAUNCHXL_LED_D5 and CC3200_LAUNCHXL_LED_D6 are shared with the I2C
   *  and PWM peripherals. In order for those examples to work, these LEDs are

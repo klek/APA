@@ -70,7 +70,6 @@ void brytarIntYO(unsigned int index);
 static void move(unsigned char direction);
 void charToInt(char coord[], int *xStart, int *yStart, int *xEnd, int *yEnd, int *zPos);
 
-
 struct step{
 	int x;
 	int y;
@@ -120,8 +119,8 @@ void moveTask(UArg arg0, UArg arg1)
 {
 	UART_Handle uart;
 	UART_Params uartParams;
-    PWM_Handle pwm1;
-    PWM_Params params;
+	PWM_Handle pwm1;
+	PWM_Params params;
 
 	// Get port and pins
 	unsigned int GPIO7Port = 0; // Direction right motor
@@ -154,18 +153,17 @@ void moveTask(UArg arg0, UArg arg1)
 	uartParams.baudRate = 9600;
 	uart = UART_open(Board_UART0, &uartParams);
 
-
 	/* Initiate the PWM */
-    uint16_t   pwmPeriod = 20000;      // Period and duty in microseconds
-    uint16_t   duty = 100;
-    uint16_t   dutyInc = 200;
-    PWM_Params_init(&params);
-    params.period = pwmPeriod;
-    pwm1 = PWM_open(Board_PWM0, &params);
-    if (pwm1 == NULL) {
-    	System_abort("Board_PWM0 did not open");
-    }
+	uint16_t   pwmPeriod = 20000;      // Period and duty in microseconds
+	uint16_t   duty = 800;
+	uint16_t   dutyInc = 50;
+	PWM_Params_init(&params);
+	params.period = pwmPeriod;
+	pwm1 = PWM_open(Board_PWM0, &params);
 
+	if (pwm1 == NULL) {
+		System_abort("Board_PWM0 did not open");
+	}
 
 	if (uart == NULL)
 	{
@@ -277,34 +275,15 @@ void moveTask(UArg arg0, UArg arg1)
     			break;
 
     		case 'z':
-
-
-    			while (duty < pwmPeriod)
-    			{
-    				PWM_setDuty(pwm1, duty);
-    				//MAP_UtilsDelay(10000000);
-    				Task_sleep(500);
-    		        duty = (duty + dutyInc);
-
-    		        /*
-    		         if (duty == pwmPeriod || (!duty)) {
-    		            dutyInc = - dutyInc;
-    		        }
-    		        */
-
-    			}
-    			duty = 0;
-    			/*
-    			if (duty > 2000)
-    			{
-    				duty = 1000;
-    			}
-    			else
-    			{
-    				duty += 500;
-    			}
     			PWM_setDuty(pwm1, duty);
-*/
+
+    			duty = (duty + dutyInc);
+				if (duty == 1650 || duty == 800) {
+					dutyInc = - dutyInc;
+				}
+
+				MAP_UtilsDelay(40000);
+
     			break;
 
     		default:
@@ -342,14 +321,6 @@ void charToInt(char coord[], int *xStart, int *yStart, int *xEnd, int *yEnd, int
 	*xEnd = (*xEnd)*SCALE;
 	*yEnd = (*yEnd)*SCALE;
 }
-
-/*
-void move(char & coord, uint16_t duty, uint16_t pwmPeriod)
-{
-	// Set duty cycle to pwm (move servo)
-	//PWM_setDuty(pwm1, duty);
-}
-*/
 
 
 // Function to take 1 step in the specified direction according to
@@ -425,7 +396,6 @@ static void move(unsigned char direction)
 
 }
 
-
 /*
  *  ======== main ========
  */
@@ -455,7 +425,7 @@ int main(void)
     //initInt();
 
     // Turn on user LED
-    GPIO_write(Board_LED0, Board_LED_ON);
+   // GPIO_write(Board_LED0, Board_LED_ON);
 
     /* install Button callback */
 	//GPIO_setCallback(Board_BUTTON0, brytarInt);

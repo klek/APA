@@ -52,6 +52,7 @@
 #include "rom.h"
 #include "rom_map.h"
 #include "gpio_if.h" // Added afterwards
+#include "timer.h" // Added afterwards
 
 //*****************************************************************************
 void PinMuxConfig(void)
@@ -66,7 +67,6 @@ void PinMuxConfig(void)
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA2, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_GPIOA3, PRCM_RUN_MODE_CLK);
 	MAP_PRCMPeripheralClkEnable(PRCM_UARTA0, PRCM_RUN_MODE_CLK);
-	MAP_TimerEnable(TIMERA2_BASE,0x0000ff00); // For PWM
 /*
     //
     // Configure PIN_52 for UART0 UART0_RTS
@@ -205,6 +205,7 @@ void PinMuxConfig(void)
 	MAP_GPIODirModeSet(GPIO22Port, GPIO22Pin, GPIO_DIR_MODE_IN);
 	// Activate internal pull-down resistor
 	//MAP_PinConfigSet(PIN_15, PIN_STRENGTH_4MA, PIN_TYPE_STD_PD);
+
 
 
 }

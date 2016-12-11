@@ -1,3 +1,19 @@
+PWM_Handle pwm1;
+    PWM_Params params;
+	/* Initiate the PWM */
+    uint16_t   pwmPeriod = 20000;      // Period and duty in microseconds
+    uint16_t   duty = 1000;
+    uint16_t   dutyInc = 500;
+    PWM_Params_init(&params);
+    params.period = pwmPeriod;
+    pwm1 = PWM_open(Board_PWM0, &params);
+    if (pwm1 == NULL) {
+    	System_abort("Board_PWM0 did not open");
+    }
+
+	
+	PWM_setDuty(pwm1, duty);
+
 ---------------------------------------------------------------
 
 void initInt()
