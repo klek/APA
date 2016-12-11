@@ -188,26 +188,32 @@ void gpioTogglePin(unsigned char pinNr)
 }
 
 // Setups interrupt
-void gpioEnableInterrupts(void)
+void gpioEnableInterrupts(unsigned char pinNr)
 {
     // Variables to set-up pin-configs
     unsigned int gpioPort = 0;
     unsigned char gpioPin = 0;
 
-    // Enable HOME_X_AXIS
-    gpioGetPortNPin(HOME_X_AXIS, &gpioPort, &gpioPin);
+    // Enable the interrupt
+    gpioGetPortNPin(pinNr, &gpioPort, &gpioPin);
     MAP_GPIOIntClear(gpioPort, gpioPin);
     MAP_GPIOIntEnable(gpioPort, gpioPin);
-
-    // Enable HOME_Y_AXIS
-    gpioGetPortNPin(HOME_Y_AXIS, &gpioPort, &gpioPin);
-    MAP_GPIOIntClear(gpioPort, gpioPin);
-    MAP_GPIOIntEnable(gpioPort, gpioPin);
-    
 }
 
 // Return the interrupt port for the specified input
 int gpioGetIntBase(unsigned char pinNr)
 {
     return (ulIntReg[pinNr / 8]);
+}
+
+// Clears the interrupt
+void gpioClearInt(unsigned char pinNr)
+{
+    // Variables to set-up pin-configs
+    unsigned int gpioPort = 0;
+    unsigned char gpioPin = 0;
+    
+    gpioGetPortNPin(pinNr, &gpioPort, &gpioPin);
+
+    MAP_GPIOIntClear(gpioPort, gpioPin);
 }

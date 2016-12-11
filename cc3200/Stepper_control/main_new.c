@@ -44,8 +44,14 @@
 
 #define INTERRUPT_PRIORITY        10
 
+// Macros for bits in status vector
 #define X_HOME                    (1 << 0)
 #define Y_HOME                    (1 << 1)
+#define HOME_FOUND                (1 << 2)
+
+// Macros for message queue
+#define MAX_MSG_LENGTH            8
+#define MAX_Q_LENGTH              5
 
 /*
  * Global variables
@@ -62,6 +68,9 @@ static struct position myPos;
 // Status variable to indicate interrupts
 // NOTE(klek): Maybe increase this one to keep track of when to get more data from web?
 static unsigned char status;
+
+static OsiMsgQ_t workMsg;
+static OsiMsgQ_t dataMsg;
 
 /*
  * Function prototypes
@@ -83,11 +92,17 @@ static void initTask(void* params);
 // This task is supposed to do all the work
 static void workTask(void* params);
 
+// This task should gather data for the workTask
+static void dataTask(void* params)
+
 /*
  * The main function
  */
 void main(void)
 {
+    // Set the status vector to zero
+    status = 0;
+    
     // Return value to be used for error checking
     long retVal = -1;
 
@@ -115,34 +130,41 @@ void main(void)
     /*
      * Message queue for communication between tasks
      */
-
+    // The message queue for data to workTask
+    retVal = osi_MsgQCreate(&workMsg, "workMsg", MAX_MSG_LENGTH, MAX_Q_LENGTH);
+    if ( retVal < 0 ) {
+        Report("Failed to create queue for data to workTask\n\r");
+        while(1);
+    }
+    
     /*
      * Create interrupts
      */
     // Create the interrupt for HOME_X_AXIS
     retVal = osi_InterruptRegister(gpioGetIntBase(HOME_X_AXIS), xAxisHandler, INTERRUPT_PRIORITY);
     if ( retVal < 0 ) {
-        Report("Failed to register the interrupts");
+        Report("Failed to register the interrupts\n\r");
         while(1);
     }
 
     // Create the interrupt for HOME_Y_AXIS
     retVal = osi_InterruptRegister(gpioGetIntBase(HOME_Y_AXIS), yAxisHandler, INTERRUPT_PRIORITY);
     if ( retVal < 0 ) {
-        Report("Failed to register the interrupts");
+        Report("Failed to register the interrupts\n\r");
         while(1);
     }
     // Enable both interrupts
-    gpioEnableInterrupts();
+    gpioEnableInterrupts(HOME_X_AXIS);
+    gpioEnableInterrupts(HOME_Y_AXIS);
     
     /*
      *Create tasks
      */
     // Create init task
-//    retVal = osi_TaskCreate(initTask, (signed char*)"initTask",
-//                            INIT_TASK_STACK_SIZE, NULL, OOB_TASK_PRIORITY, NULL);
+    retVal = osi_TaskCreate(initTask, (signed char*)"initTask",
+                            INIT_TASK_STACK_SIZE, NULL, OOB_TASK_PRIORITY, NULL);
     if ( retVal < 0 ) {
-        Report("Failed to create initTask");
+        Report("Failed to create initTask\n\r");
         while(1);
     }
     
@@ -150,7 +172,7 @@ void main(void)
     retVal = osi_TaskCreate(workTask, (signed char*)"workTask",
                             WORK_TASK_STACK_SIZE, NULL, OOB_TASK_PRIORITY, NULL);
     if ( retVal < 0 ) {
-        Report("Failed to create workTask");
+        Report("Failed to create workTask\n\r");
         while(1);
     }
 
@@ -198,9 +220,16 @@ static void xAxisHandler(void)
     unsigned long pinState = GPIOIntStatus(GPIOA2_BASE, 1);
 
     // Check which pin gave interrupt
+    // NOTE(klek): This doesn't seem to work??
     if ( pinState & HOME_X_AXIS ) {
         while(1);
     }
+
+    // Set the corresponding bit in status vector
+    status |= X_HOME;
+
+    // Clear the interrupt
+    gpioClearInt(HOME_X_AXIS);
 }
 
 // Interrupt handler for y-axis switch
@@ -210,15 +239,16 @@ static void yAxisHandler(void)
     unsigned long pinState = GPIOIntStatus(GPIOA3_BASE, 1);
 
     // Check which pin gave interrupt
-    if ( pinState & HOME_Y_AXIS ) {
+    if ( !(pinState & HOME_Y_AXIS) ) {
+        // Wrong interrupt, lock us for now
         while(1);
     }
-    else if ( pinState & HOME_X_AXIS ) {
-        while(1);
-    }
-    else {
-        while(1);
-    }
+
+    // Set the corresponding bit in status vector
+    status |= Y_HOME;
+
+    // Clear the interrupt
+    gpioClearInt(HOME_Y_AXIS);
 }
 
 // This task should move printer head to homing position
@@ -246,16 +276,29 @@ static void initTask(void* params)
     }
     // We should now be at zero y-position
     myPos.yPosition = 0;
+
+    // Print out in console
+    Report("Home positions found\n\r");
+    
+    // Indicate for workTask that we can start working
+    status |= HOME_FOUND;
 }
 
 
-// Function to test the newly implemented functions
+// Task to carry out all the orders found in the databuffer
 static void workTask(void* params)
 {
     // Task setup
  
-    // After we have found the homing position
-    
+    // Wait for home position to be found
+    while ( !(status & HOME_FOUND) );
+
+    // What should we do here?
+    // TODO(klek): We should have a databuffer with orders
+    // looking that contain which coordinates to go to and
+    // if the pen should be up or down during this movement
+    // NOTE(klek): Depending on our implementation (file download or
+    // direct communication) the data buffer should be of different size
 
     
     int i = 0;
@@ -283,4 +326,11 @@ static void workTask(void* params)
     }
     // Wait here
 //    while (1);
+}
+
+// Task to gather data from the source, dechiper it and finally pack it into the databuffer for
+// orders to be carried out by workTask
+static void dataTask(void* params)
+{
+    
 }

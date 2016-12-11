@@ -22,6 +22,17 @@ struct position {
     unsigned int yPosition;
 };
 
+// Struct for orders
+struct order {
+    //struct position goTo;
+
+    // Possibly use this instead of the struct
+    unsigned int xCoord;
+    unsigned int yCoord;
+
+    unsigned char pen;
+}
+
 // Possible direction for the move-function
 enum directions {
     POS_X,
