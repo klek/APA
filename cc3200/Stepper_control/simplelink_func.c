@@ -8,6 +8,7 @@
 
 // General
 #include "simplelink_func.h"
+#include "network_cred.h"
 
 // C-libraries
 #include <string.h>
@@ -323,4 +324,207 @@ void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pHttpEvent,
                                   SlHttpServerResponse_t *pHttpResponse)
 {
     // Unused in this application
+}
+
+// Configures simplelink to the default state, which is
+//     - Set the mode to STATION
+//     - Configures connection policy to Auto and AutoSmartConfig
+//     - Deletes all the stored profiles
+//     - Enables DHCP
+//     - Disables Scan policy
+//     - Sets Tx power to maximum
+//     - Sets power policy to normal
+//     - Unregister mDNS services
+//     - Remove all filters
+// NOTE(klek): Copied from examples
+static long ConfigureSimpleLinkToDefaultState()
+{
+    SlVersionFull   ver = {0};
+    _WlanRxFilterOperationCommandBuff_t  RxFilterIdMask = {0};
+
+    unsigned char ucVal = 1;
+    unsigned char ucConfigOpt = 0;
+    unsigned char ucConfigLen = 0;
+    unsigned char ucPower = 0;
+
+    long lRetVal = -1;
+    long lMode = -1;
+
+    lMode = sl_Start(0, 0, 0);
+    ASSERT_ON_ERROR(lMode);
+
+    // If the device is not in station-mode, try configuring it in station-mode 
+    if (ROLE_STA != lMode)
+    {
+        if (ROLE_AP == lMode)
+        {
+            // If the device is in AP mode, we need to wait for this event 
+            // before doing anything 
+            while(!IS_IP_ACQUIRED(g_ulStatus))
+            {
+#ifndef SL_PLATFORM_MULTI_THREADED
+              _SlNonOsMainLoopTask(); 
+#endif
+            }
+        }
+
+        // Switch to STA role and restart 
+        lRetVal = sl_WlanSetMode(ROLE_STA);
+        ASSERT_ON_ERROR(lRetVal);
+
+        lRetVal = sl_Stop(0xFF);
+        ASSERT_ON_ERROR(lRetVal);
+
+        lRetVal = sl_Start(0, 0, 0);
+        ASSERT_ON_ERROR(lRetVal);
+
+        // Check if the device is in station again 
+        if (ROLE_STA != lRetVal)
+        {
+            // We don't want to proceed if the device is not coming up in STA-mode 
+            return DEVICE_NOT_IN_STATION_MODE;
+        }
+    }
+    
+    // Get the device's version-information
+    ucConfigOpt = SL_DEVICE_GENERAL_VERSION;
+    ucConfigLen = sizeof(ver);
+    lRetVal = sl_DevGet(SL_DEVICE_GENERAL_CONFIGURATION, &ucConfigOpt, 
+                                &ucConfigLen, (unsigned char *)(&ver));
+    ASSERT_ON_ERROR(lRetVal);
+    
+    UART_PRINT("Host Driver Version: %s\n\r",SL_DRIVER_VERSION);
+    UART_PRINT("Build Version %d.%d.%d.%d.31.%d.%d.%d.%d.%d.%d.%d.%d\n\r",
+    ver.NwpVersion[0],ver.NwpVersion[1],ver.NwpVersion[2],ver.NwpVersion[3],
+    ver.ChipFwAndPhyVersion.FwVersion[0],ver.ChipFwAndPhyVersion.FwVersion[1],
+    ver.ChipFwAndPhyVersion.FwVersion[2],ver.ChipFwAndPhyVersion.FwVersion[3],
+    ver.ChipFwAndPhyVersion.PhyVersion[0],ver.ChipFwAndPhyVersion.PhyVersion[1],
+    ver.ChipFwAndPhyVersion.PhyVersion[2],ver.ChipFwAndPhyVersion.PhyVersion[3]);
+
+    // Set connection policy to Auto + SmartConfig 
+    //      (Device's default connection policy)
+    lRetVal = sl_WlanPolicySet(SL_POLICY_CONNECTION, 
+                                SL_CONNECTION_POLICY(1, 0, 0, 0, 1), NULL, 0);
+    ASSERT_ON_ERROR(lRetVal);
+
+    // Remove all profiles
+    lRetVal = sl_WlanProfileDel(0xFF);
+    ASSERT_ON_ERROR(lRetVal);
+
+    //
+    // Device in station-mode. Disconnect previous connection if any
+    // The function returns 0 if 'Disconnected done', negative number if already
+    // disconnected Wait for 'disconnection' event if 0 is returned, Ignore 
+    // other return-codes
+    //
+    lRetVal = sl_WlanDisconnect();
+    if(0 == lRetVal)
+    {
+        // Wait
+        while(IS_CONNECTED(g_ulStatus))
+        {
+#ifndef SL_PLATFORM_MULTI_THREADED
+              _SlNonOsMainLoopTask(); 
+#endif
+        }
+    }
+
+    // Enable DHCP client
+    lRetVal = sl_NetCfgSet(SL_IPV4_STA_P2P_CL_DHCP_ENABLE,1,1,&ucVal);
+    ASSERT_ON_ERROR(lRetVal);
+
+    // Disable scan
+    ucConfigOpt = SL_SCAN_POLICY(0);
+    lRetVal = sl_WlanPolicySet(SL_POLICY_SCAN , ucConfigOpt, NULL, 0);
+    ASSERT_ON_ERROR(lRetVal);
+
+    // Set Tx power level for station mode
+    // Number between 0-15, as dB offset from max power - 0 will set max power
+    ucPower = 0;
+    lRetVal = sl_WlanSet(SL_WLAN_CFG_GENERAL_PARAM_ID, 
+            WLAN_GENERAL_PARAM_OPT_STA_TX_POWER, 1, (unsigned char *)&ucPower);
+    ASSERT_ON_ERROR(lRetVal);
+
+    // Set PM policy to normal
+    lRetVal = sl_WlanPolicySet(SL_POLICY_PM , SL_NORMAL_POLICY, NULL, 0);
+    ASSERT_ON_ERROR(lRetVal);
+
+    // Unregister mDNS services
+    lRetVal = sl_NetAppMDNSUnRegisterService(0, 0);
+    ASSERT_ON_ERROR(lRetVal);
+
+    // Remove  all 64 filters (8*8)
+    memset(RxFilterIdMask.FilterIdMask, 0xFF, 8);
+    lRetVal = sl_WlanRxFilterSet(SL_REMOVE_RX_FILTER, (_u8 *)&RxFilterIdMask,
+                       sizeof(_WlanRxFilterOperationCommandBuff_t));
+    ASSERT_ON_ERROR(lRetVal);
+
+
+    lRetVal = sl_Stop(SL_STOP_TIMEOUT);
+    ASSERT_ON_ERROR(lRetVal);
+
+    g_ulStatus = 0;
+    g_ulGatewayIP = 0;
+    memset(g_ucConnectionSSID,0,sizeof(g_ucConnectionSSID));
+    memset(g_ucConnectionBSSID,0,sizeof(g_ucConnectionBSSID));
+
+    return SUCCESS;
+}
+
+// Connects to the network specified by the macros
+// NOTE(klek): Copied from examples
+// NOTE(klek): Modified with network credentials
+long wlanConnect()
+{
+    SlSecParams_t secParams = {0};
+    long lRetVal = 0;
+
+    secParams.Key = (signed char *)NETWORK_SEC_KEY;
+    secParams.KeyLen = strlen(NETWORK_SEC_KEY);
+    secParams.Type = NETWORK_SEC_TYPE;
+
+    lRetVal = sl_WlanConnect((signed char *)NETWORK_SSID_NAME,
+                           strlen((const char *)NETWORK_SSID_NAME), 0, &secParams, 0);
+    ASSERT_ON_ERROR(lRetVal);
+
+    // Wait for WLAN Event
+    while((!IS_CONNECTED(g_ulStatus)) || (!IS_IP_ACQUIRED(g_ulStatus)))
+    {
+        // wait till connects to an AP
+#ifndef SL_PLATFORM_MULTI_THREADED
+              _SlNonOsMainLoopTask();
+#endif
+    }
+
+    Report("Connected to %s \n\r", g_ucConnectionSSID);
+    
+    return SUCCESS;
+}
+
+// Configures simplelink to default state and starts the wlan
+long wlanStart(void)
+{
+    long retVal = -1;
+
+    retVal = ConfigureSimpleLinkToDefaultState();
+    if ( retVal < 0 ) {
+        if ( retVal == DEVICE_NOT_IN_STATION_MODE ) {
+            Report("Failed to configure the device in its default state. Error %d \n\r", retVal);
+        }
+        while(1);
+    }
+
+    // Device is configured in default state
+    Report("Device configured in default state as station\n\r");
+
+    // Start the wlan
+    retVal = sl_Start(0, 0, 0);
+    if ( retVal < 0 ) {
+        ASSERT_ON_ERROR(DEVICE_START_FAILED);
+    }
+
+    // Device started as station
+    Report("Device started as station\n\r");
+
+    return SUCCESS;
 }

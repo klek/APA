@@ -39,8 +39,11 @@
  * Macros
  */
 #define WORK_TASK_STACK_SIZE      (2048)
+#define DATA_TASK_STACK_SIZE      (2048)
 #define INIT_TASK_STACK_SIZE      (512)
-#define OOB_TASK_PRIORITY         (1)
+#define WORK_TASK_PRIORITY        (3)
+#define DATA_TASK_PRIORITY        (1)
+#define INIT_TASK_PRIORITY        (2)
 
 #define INTERRUPT_PRIORITY        10
 
@@ -73,11 +76,22 @@ static OsiMsgQ_t workMsg;
 static OsiMsgQ_t dataMsg;
 
 /*
+ * External stuff
+ */
+extern void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent);
+extern void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent);
+extern void SimpleLinkGeneralEventHandler(SlDeviceEvent_t *pDevEvent);
+extern void SimpleLinkSockEventHandler(SlSockEvent_t *pSock);
+extern void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pHttpEvent,
+                                         SlHttpServerResponse_t *pHttpResponse);
+
+
+
+/*
  * Function prototypes
  */
 // Interrupt handler for homing-switches
 static void xAxisHandler(void);
-
 static void yAxisHandler(void);
 
 // Initialize the components of the board
@@ -158,21 +172,29 @@ void main(void)
     gpioEnableInterrupts(HOME_Y_AXIS);
     
     /*
-     *Create tasks
+     * Create tasks
      */
     // Create init task
-//    retVal = osi_TaskCreate(initTask, (signed char*)"initTask",
-//                            INIT_TASK_STACK_SIZE, NULL, OOB_TASK_PRIORITY, NULL);
+    retVal = osi_TaskCreate(initTask, (signed char*)"initTask",
+                            INIT_TASK_STACK_SIZE, NULL, INIT_TASK_PRIORITY, NULL);
     if ( retVal < 0 ) {
         Report("Failed to create initTask\n\r");
         while(1);
     }
     
-    // Create the main task
+    // Create the work task
     retVal = osi_TaskCreate(workTask, (signed char*)"workTask",
-                            WORK_TASK_STACK_SIZE, NULL, OOB_TASK_PRIORITY, NULL);
+                            WORK_TASK_STACK_SIZE, NULL, WORK_TASK_PRIORITY, NULL);
     if ( retVal < 0 ) {
         Report("Failed to create workTask\n\r");
+        while(1);
+    }
+
+    // Create the data collection task
+    retVal = osi_TaskCreate(dataTask, (signed char*)"dataTask",
+                            DATA_TASK_STACK_SIZE, NULL, DATA_TASK_PRIORITY, NULL);
+    if ( retVal < 0 ) {
+        Report("Failed to create dataTask\n\r");
         while(1);
     }
 
@@ -221,9 +243,9 @@ static void xAxisHandler(void)
 
     // Check which pin gave interrupt
     // NOTE(klek): This doesn't seem to work??
-    if ( pinState & HOME_X_AXIS ) {
-        while(1);
-    }
+//    if ( pinState & HOME_X_AXIS ) {
+//        while(1);
+//    }
 
     // Set the corresponding bit in status vector
     status |= X_HOME;
@@ -239,10 +261,10 @@ static void yAxisHandler(void)
     unsigned long pinState = GPIOIntStatus(GPIOA3_BASE, 1);
 
     // Check which pin gave interrupt
-    if ( !(pinState & HOME_Y_AXIS) ) {
-        // Wrong interrupt, lock us for now
-        while(1);
-    }
+//    if ( !(pinState & HOME_Y_AXIS) ) {
+//        // Wrong interrupt, lock us for now
+//        while(1);
+//    }
 
     // Set the corresponding bit in status vector
     status |= Y_HOME;
@@ -278,10 +300,14 @@ static void initTask(void* params)
     myPos.yPosition = 0;
 
     // Print out in console
-    Report("Home positions found\n\r");
+    Report("Home position found\n\r");
     
     // Indicate for workTask that we can start working
     status |= HOME_FOUND;
+
+    while (1) {
+        osi_Sleep(100);
+    }
 }
 
 
@@ -291,7 +317,9 @@ static void workTask(void* params)
     // Task setup
  
     // Wait for home position to be found
-//    while ( !(status & HOME_FOUND) );
+    while ( !(status & HOME_FOUND) ) {
+        osi_Sleep(100);
+    }
 
     // What should we do here?
     // TODO(klek): We should have a databuffer with orders
@@ -323,6 +351,8 @@ static void workTask(void* params)
         for (i = 0; i < 100; i++) {
             move(NEG_Y);
         }
+
+        osi_Sleep(100);
     }
     // Wait here
 //    while (1);
@@ -332,5 +362,19 @@ static void workTask(void* params)
 // orders to be carried out by workTask
 static void dataTask(void* params)
 {
+    long retVal = -1;
+    // Start the wlan
+    retVal = wlanStart();
+    // ERROR CHECKING
+    
+    // Start by connecting to wlan
+    retVal = wlanConnect();
+    if ( retVal < 0 ) {
+        // We are pretty much fucked
+        Report("Couldn't connect to network\n\r");
+        while(1);
+    }
 
+    // We should now be connected to the network
+//    Report("Connected to 
 }

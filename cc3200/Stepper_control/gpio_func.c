@@ -102,13 +102,13 @@ void pinMuxConfig(void)
     MAP_PinTypeGPIO(PIN_15, PIN_MODE_0, false);
     gpioGetPortNPin(HOME_X_AXIS, &gpioPort, &gpioPin);
     MAP_GPIODirModeSet(gpioPort, gpioPin, GPIO_DIR_MODE_IN);
-    MAP_GPIOIntTypeSet(gpioPort, gpioPin, GPIO_RISING_EDGE | GPIO_HIGH_LEVEL);
+    MAP_GPIOIntTypeSet(gpioPort, gpioPin, GPIO_RISING_EDGE);// | GPIO_HIGH_LEVEL);
 
     // HOME_Y_AXIS setup as input GPIO
     MAP_PinTypeGPIO(PIN_18, PIN_MODE_0, false);
     gpioGetPortNPin(HOME_Y_AXIS, &gpioPort, &gpioPin);
     MAP_GPIODirModeSet(gpioPort, gpioPin, GPIO_DIR_MODE_IN);
-    MAP_GPIOIntTypeSet(gpioPort, gpioPin, GPIO_RISING_EDGE | GPIO_HIGH_LEVEL);
+    MAP_GPIOIntTypeSet(gpioPort, gpioPin, GPIO_RISING_EDGE);// | GPIO_HIGH_LEVEL);
 
     // NOTE(klek): Configuring this will remove the possibility to debug the device
     //             cause this is one of the JTAG-pins

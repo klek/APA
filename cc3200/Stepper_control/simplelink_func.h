@@ -73,5 +73,17 @@ void SimpleLinkSockEventHandler(SlSockEvent_t *pSock);
 void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pHttpEvent,
                                   SlHttpServerResponse_t *pHttpResponse);
 
+// Configures simplelink to default state
+// NOTE(klek): Copied from examples
+static long ConfigureSimpleLinkToDefaultState();
+
+// Connects to the network specified by the macros
+// NOTE(klek): Copied from examples
+// NOTE(klek): Modified with network credentials
+long wlanConnect();
+
+// Configures simplelink to default state and starts the wlan
+long wlanStart(void);
+
 
 #endif
