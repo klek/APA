@@ -19,8 +19,8 @@
 #define MOTOR_STEP_PIN   10  // GPIO10 - PIN01
 
 // Pin definitions for homing switches
-#define HOME_X_AXIS      22  // GPIO22 - PIN15 - Brytare 4
-#define HOME_Y_AXIS      28  // GPIO1 - PIN18 - Brytare 3
+#define HOME_Y_AXIS      22  // GPIO22 - PIN15 - Brytare 4
+#define HOME_X_AXIS      28  // GPIO1 - PIN18 - Brytare 3
 #define END_X_AXIS       24  // GPIO24 - PIN17 - Brytare 2
 #define END_Y_AXIS       23  // GPIO23 - PIN16 - Brytare 1
 

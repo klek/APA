@@ -31,7 +31,7 @@ struct order {
     unsigned int yCoord;
 
     unsigned char pen;
-}
+};
 
 // Possible direction for the move-function
 enum directions {

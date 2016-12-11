@@ -216,4 +216,5 @@ void gpioClearInt(unsigned char pinNr)
     gpioGetPortNPin(pinNr, &gpioPort, &gpioPin);
 
     MAP_GPIOIntClear(gpioPort, gpioPin);
+    MAP_IntPendClear(ulIntReg[pinNr / 8]);
 }

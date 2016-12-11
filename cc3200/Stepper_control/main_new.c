@@ -93,7 +93,7 @@ static void initTask(void* params);
 static void workTask(void* params);
 
 // This task should gather data for the workTask
-static void dataTask(void* params)
+static void dataTask(void* params);
 
 /*
  * The main function
@@ -161,8 +161,8 @@ void main(void)
      *Create tasks
      */
     // Create init task
-    retVal = osi_TaskCreate(initTask, (signed char*)"initTask",
-                            INIT_TASK_STACK_SIZE, NULL, OOB_TASK_PRIORITY, NULL);
+//    retVal = osi_TaskCreate(initTask, (signed char*)"initTask",
+//                            INIT_TASK_STACK_SIZE, NULL, OOB_TASK_PRIORITY, NULL);
     if ( retVal < 0 ) {
         Report("Failed to create initTask\n\r");
         while(1);
@@ -291,7 +291,7 @@ static void workTask(void* params)
     // Task setup
  
     // Wait for home position to be found
-    while ( !(status & HOME_FOUND) );
+//    while ( !(status & HOME_FOUND) );
 
     // What should we do here?
     // TODO(klek): We should have a databuffer with orders
@@ -332,5 +332,5 @@ static void workTask(void* params)
 // orders to be carried out by workTask
 static void dataTask(void* params)
 {
-    
+
 }
