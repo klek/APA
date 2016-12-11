@@ -48,6 +48,8 @@
 #define DIR2	8
 #define SCALE 	1
 #define COORDSIZE 14
+#define MAXDUTY 1650
+#define MINDUTY 800
 
 enum directions {
     POS_X,
@@ -63,10 +65,8 @@ Char task0Stack[TASKSTACKSIZE];
 
 void init_step();
 void initInt();
-//void brytarInt();
-void brytarInt(unsigned int index);
-void brytarIntYO(unsigned int index);
-//void brytarIntYO();
+void brytarIntY(unsigned int index);
+void brytarIntX(unsigned int index);
 static void move(unsigned char direction);
 void charToInt(char coord[], int *xStart, int *yStart, int *xEnd, int *yEnd, int *zPos);
 
@@ -81,11 +81,7 @@ struct step steps;
 /* variable to be read by GUI Composer */
 int count = 0;
 
-
-
-
-//void brytarInt()
-void brytarInt(unsigned int index)
+void brytarIntY(unsigned int index)
 {
 	/* Stop the motors in this direction */
 	/* Decide what switch was activated */
@@ -99,8 +95,7 @@ void brytarInt(unsigned int index)
     }
 }
 
-//void brytarIntYO()
-void brytarIntYO(unsigned int index)
+void brytarIntX(unsigned int index)
 {
 	/* Stop the motors in this direction */
 	/* Decide what switch was activated */
@@ -144,6 +139,16 @@ void moveTask(UArg arg0, UArg arg1)
 
 	GPIO_IF_LedOff(MCU_ALL_LED_IND);
 
+	/* Initiate the PWM */
+	uint16_t   pwmPeriod = 20000;      // Period and duty in microseconds
+	uint16_t   duty = 1000;
+	uint16_t   dutyInc = 50;
+	PWM_Params_init(&params);
+	params.period = pwmPeriod;
+	pwm1 = PWM_open(Board_PWM0, &params);
+	MAP_UtilsDelay(20000);
+	PWM_setDuty(pwm1, duty);
+
 	/* Create a UART with data processing off. */
 	UART_Params_init(&uartParams);
 	uartParams.writeDataMode = UART_DATA_BINARY;
@@ -152,14 +157,6 @@ void moveTask(UArg arg0, UArg arg1)
 	uartParams.readEcho = UART_ECHO_ON;
 	uartParams.baudRate = 9600;
 	uart = UART_open(Board_UART0, &uartParams);
-
-	/* Initiate the PWM */
-	uint16_t   pwmPeriod = 20000;      // Period and duty in microseconds
-	uint16_t   duty = 800;
-	uint16_t   dutyInc = 50;
-	PWM_Params_init(&params);
-	params.period = pwmPeriod;
-	pwm1 = PWM_open(Board_PWM0, &params);
 
 	if (pwm1 == NULL) {
 		System_abort("Board_PWM0 did not open");
@@ -198,6 +195,7 @@ void moveTask(UArg arg0, UArg arg1)
 
     			charToInt(coord, &xStart, &yStart, &xEnd, &yEnd, &zPos);
 
+    			count = 1; // Dummy for breakpoint
     			// Move to start coordinate
     			while((steps.x != xStart) || (steps.y != yStart))
     			{
@@ -278,13 +276,29 @@ void moveTask(UArg arg0, UArg arg1)
     			PWM_setDuty(pwm1, duty);
 
     			duty = (duty + dutyInc);
-				if (duty == 1650 || duty == 800) {
+				if (duty >= MAXDUTY || duty <= MINDUTY) {
 					dutyInc = - dutyInc;
 				}
 
 				MAP_UtilsDelay(40000);
 
     			break;
+
+    		case 'v':
+
+    			//POS_Y
+    			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
+				GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
+
+			    MAP_UtilsDelay(5000);
+				GPIO_IF_Set(10, GPIO10Port, GPIO10Pin, 1); // Step on - Pin 1 GP10
+				MAP_UtilsDelay(5000);
+				GPIO_IF_Set(10, GPIO10Port, GPIO10Pin, 0); // Step off - Pin 1 GP10
+
+    			break;
+
+    		case 'a':
+    			/* Move to the origin */
 
     		default:
     			break;
@@ -354,8 +368,8 @@ static void move(unsigned char direction)
         //GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
         //GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 1);
 
-        GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
-		GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
+        GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
+		GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
 		steps.y++;
         break;
 
@@ -373,8 +387,8 @@ static void move(unsigned char direction)
         //GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
         //GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 0);
 
-    	GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
-		GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
+    	GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
+		GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
 		steps.y--;
     	break;
 
@@ -422,20 +436,9 @@ int main(void)
     taskParams.instance->name = "echo";
     Task_construct(&task0Struct, (Task_FuncPtr)moveTask, &taskParams, NULL);
 
-    //initInt();
-
-    // Turn on user LED
-   // GPIO_write(Board_LED0, Board_LED_ON);
-
-    /* install Button callback */
-	//GPIO_setCallback(Board_BUTTON0, brytarInt);
-
-	/* Enable interrupts */
-	//GPIO_enableInt(Board_BUTTON0);
-
 	/* install Button callback */
-	GPIO_setCallback(BOARD_INT0, brytarIntYO); // GPIO28 - Pin 18
-	GPIO_setCallback(BOARD_INT1, brytarInt); // GPIO22 - Pin 15
+	GPIO_setCallback(BOARD_INT0, brytarIntX); // GPIO28 - Pin 18
+	GPIO_setCallback(BOARD_INT1, brytarIntY); // GPIO22 - Pin 15
 
 	/* Enable interrupts */
 	GPIO_enableInt(BOARD_INT0);
