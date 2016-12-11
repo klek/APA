@@ -50,6 +50,8 @@
 #define COORDSIZE 14
 #define MAXDUTY 1650
 #define MINDUTY 800
+#define MAXSTEPSY 100000 // Set correct value after measurements
+#define MAXSTEPSX 100000 // Set correct value after measurements
 
 enum directions {
     POS_X,
@@ -58,55 +60,36 @@ enum directions {
     NEG_Y
 };
 
-
-Task_Struct task0Struct;
-Char task0Stack[TASKSTACKSIZE];
-
-
-void init_step();
-void initInt();
-void brytarIntY(unsigned int index);
-void brytarIntX(unsigned int index);
-static void move(unsigned char direction);
-void charToInt(char coord[], int *xStart, int *yStart, int *xEnd, int *yEnd, int *zPos);
-
 struct step{
 	int x;
 	int y;
 };
 
+/* GLOBAL VARABLES */
 struct step steps;
+int originFlagX = 0; // 0 - Not origin. 1 - Origin
+int originFlagY = 0; // 0 - Not origin. 1 - Origin
 
+Task_Struct task0Struct;
+Char task0Stack[TASKSTACKSIZE];
 
-/* variable to be read by GUI Composer */
-int count = 0;
+void brytarIntY(unsigned int index);
+void brytarIntX(unsigned int index);
+static void move(unsigned char direction);
+void charToInt(char coord[], int *xStart, int *yStart, int *xEnd, int *yEnd, int *zPos);
 
 void brytarIntY(unsigned int index)
 {
-	/* Stop the motors in this direction */
-	/* Decide what switch was activated */
-
-    /* Clear the GPIO interrupt and toggle an LED */
-
-    //GPIO_toggle(Board_LED0);
-
-    if (count++ == 1) {
-        count = 0;
-    }
+	move(POS_Y);
+	steps.y = 0;
+	originFlagY = 1;
 }
 
 void brytarIntX(unsigned int index)
 {
-	/* Stop the motors in this direction */
-	/* Decide what switch was activated */
-
-    /* Clear the GPIO interrupt and toggle an LED */
-
-    //GPIO_toggle(Board_LED0);
-
-    if (count++ == 1) {
-        count = 0;
-    }
+	move(POS_X);
+	steps.x = 0;
+	originFlagX = 1;
 }
 
 
@@ -195,7 +178,6 @@ void moveTask(UArg arg0, UArg arg1)
 
     			charToInt(coord, &xStart, &yStart, &xEnd, &yEnd, &zPos);
 
-    			count = 1; // Dummy for breakpoint
     			// Move to start coordinate
     			while((steps.x != xStart) || (steps.y != yStart))
     			{
@@ -297,8 +279,21 @@ void moveTask(UArg arg0, UArg arg1)
 
     			break;
 
-    		case 'a':
+    		case 'o':
     			/* Move to the origin */
+    			while(!originFlagX || !originFlagY)
+    			{
+    				if(!originFlagX)
+    				{
+    					move(NEG_X);
+    				}
+    				if(!originFlagY)
+    				{
+    					move(NEG_Y);
+    				}
+    			}
+
+    			break;
 
     		default:
     			break;
@@ -354,42 +349,44 @@ static void move(unsigned char direction)
     switch(direction)
     {
     case POS_X:
-        // Both motors should spin counterclockwise
-        //GPIO_IF_LedOn(MCU_GREEN_LED_GPIO); // Right
-    	//GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 1);
-
-    	GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
-        GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
-        steps.x++;
+    	if (steps.x < MAXSTEPSX)
+    	{
+			// Both motors should spin counterclockwise
+			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
+			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
+			steps.x++;
+			originFlagX = 0;
+    	}
         break;
 
     case POS_Y:
-        // Left motor should spin clockwise, right motor should spin counterclockwise
-        //GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
-        //GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 1);
-
-        GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
-		GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
-		steps.y++;
+    	if (steps.y < MAXSTEPSY)
+    	{
+			// Left motor should spin clockwise, right motor should spin counterclockwise
+			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
+			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
+			steps.y++;
+			originFlagY = 0;
+    	}
         break;
 
     case NEG_X:
-        // Both motors should spin clockwise
-        //GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
-        //GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 0);
-
-    	GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
-		GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
-		steps.x--;
+    	if (!originFlagX)
+    	{
+    		// Both motors should spin clockwise
+			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
+			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
+			steps.x--;
+    	}
     	break;
 
     case NEG_Y:
-        //GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
-        //GPIO_IF_Set(DIR2, GPIO8Port, GPIO8Pin, 0);
-
-    	GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
-		GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
-		steps.y--;
+    	if (!originFlagY)
+    	{
+			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
+			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
+			steps.y--;
+    	}
     	break;
 
     default:
