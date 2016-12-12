@@ -76,20 +76,31 @@ Char task0Stack[TASKSTACKSIZE];
 void brytarIntY(unsigned int index);
 void brytarIntX(unsigned int index);
 static void move(unsigned char direction);
+void moveToOrigin();
 void charToInt(char coord[], int *xStart, int *yStart, int *xEnd, int *yEnd, int *zPos);
 
 void brytarIntY(unsigned int index)
 {
-	move(POS_Y);
+	int i;
+	for (i = 0; i < 70 ; i++)
+	{
+		move(POS_Y);
+	}
 	steps.y = 0;
 	originFlagY = 1;
+	IntPendClear(INT_GPIOA0);
 }
 
 void brytarIntX(unsigned int index)
 {
-	move(POS_X);
+	int i;
+	for (i = 0; i < 70 ; i++)
+	{
+		move(POS_X);
+	}
 	steps.x = 0;
 	originFlagX = 1;
+	IntPendClear(INT_GPIOA3);
 }
 
 
@@ -190,6 +201,12 @@ void moveTask(UArg arg0, UArg arg1)
     					move(NEG_X);
     				}
 
+    				if ((steps.x != xStart) && (steps.y != yStart))
+    				{
+    					Task_sleep(20);
+    					//MAP_UtilsDelay(20000);
+    				}
+
     				if(steps.y < yStart)
     				{
     					move(POS_Y);
@@ -210,6 +227,12 @@ void moveTask(UArg arg0, UArg arg1)
 					else if (steps.x > xEnd)
 					{
 						move(NEG_X);
+					}
+
+					if ((steps.x != xEnd) && (steps.y != yEnd))
+					{
+						Task_sleep(20);
+						//MAP_UtilsDelay(20000);
 					}
 
 					if(steps.y < yEnd)
@@ -280,18 +303,7 @@ void moveTask(UArg arg0, UArg arg1)
     			break;
 
     		case 'o':
-    			/* Move to the origin */
-    			while(!originFlagX || !originFlagY)
-    			{
-    				if(!originFlagX)
-    				{
-    					move(NEG_X);
-    				}
-    				if(!originFlagY)
-    				{
-    					move(NEG_Y);
-    				}
-    			}
+    			moveToOrigin();
 
     			break;
 
@@ -301,6 +313,26 @@ void moveTask(UArg arg0, UArg arg1)
     }
 }
 
+
+void moveToOrigin()
+{
+	/* Move to the origin */
+	while(!originFlagX)
+	{
+		//if(!originFlagX)
+		//{
+			move(NEG_X);
+		//}
+	}
+
+	while(!originFlagY)
+	{
+		//if(!originFlagY)
+		//{
+			move(NEG_Y);
+		//}
+	}
+}
 
 void charToInt(char coord[], int *xStart, int *yStart, int *xEnd, int *yEnd, int *zPos)
 {
@@ -394,9 +426,9 @@ static void move(unsigned char direction)
     }
 
     // We should always make a step after direction has been set
-    MAP_UtilsDelay(40000);
+    MAP_UtilsDelay(20000);
 	GPIO_IF_Set(10, GPIO10Port, GPIO10Pin, 1); // Step on - Pin 1 GP10
-	MAP_UtilsDelay(40000);
+	MAP_UtilsDelay(20000);
 	GPIO_IF_Set(10, GPIO10Port, GPIO10Pin, 0); // Step off - Pin 1 GP10
 
 
