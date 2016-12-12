@@ -1,3 +1,113 @@
+
+
+
+------------------------------------------------------------------
+// Fetch data (get coordinate)
+UART_read(uart, &msg, 1);
+
+
+// Decode data (read parameters from coordinate data)
+switch(msg)
+{
+	case 'c':
+		i = 0;
+		while(i <= 13)
+		{
+
+			UART_read(uart, &msg, 1); // Read message
+
+			// Read
+		//	coord[i] = msg;
+
+			i++;
+		}
+
+
+		//charToInt(coord, &xStart, &yStart, &xEnd, &yEnd, &zPos);
+
+		// Move to start coordinate
+		while((steps.x != xStart) || (steps.y != yStart))
+		{
+			if(steps.x < xStart)
+			{
+				move(POS_X);
+			}
+			else if (steps.x > xStart)
+			{
+				move(NEG_X);
+			}
+
+			if ((steps.x != xStart) && (steps.y != yStart)) // Only sleep if diagonal movement
+			{
+				Task_sleep(20);
+				//MAP_UtilsDelay(20000);
+			}
+
+			if(steps.y < yStart)
+			{
+				move(POS_Y);
+			}
+			else if (steps.y > yStart)
+			{
+				move(NEG_Y);
+			}
+		}
+
+		// Move from start to end coordinate
+		while((steps.x != xEnd) || (steps.y != yEnd))
+		{
+			if(steps.x < xEnd)
+			{
+				move(POS_X);
+			}
+			else if (steps.x > xEnd)
+			{
+				move(NEG_X);
+			}
+
+			if ((steps.x != xEnd) && (steps.y != yEnd)) // Only sleep if diagonal movement
+			{
+				Task_sleep(20);
+				//MAP_UtilsDelay(20000);
+			}
+
+			if(steps.y < yEnd)
+			{
+				move(POS_Y);
+			}
+			else if (steps.y > yEnd)
+			{
+				move(NEG_Y);
+			}
+		}
+
+		break;
+
+	case 'z':
+		PWM_setDuty(pwm1, duty);
+
+		duty = (duty + dutyInc);
+		if (duty >= MAXDUTY || duty <= MINDUTY) {
+			dutyInc = - dutyInc;
+		}
+
+		MAP_UtilsDelay(40000);
+
+		break;
+
+	case 'o':
+		moveToOrigin();
+
+		break;
+
+	default:
+		break;
+}
+
+
+
+-----------------------------------------------------------------------
+
 PWM_Handle pwm1;
     PWM_Params params;
 	/* Initiate the PWM */
