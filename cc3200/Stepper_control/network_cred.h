@@ -15,8 +15,8 @@
 /*
  * Credentials used to connect to network
  */
-#define NETWORK_SSID_NAME     ""
+#define NETWORK_SSID_NAME     "klek"
 #define NETWORK_SEC_TYPE      SL_SEC_TYPE_WPA
-#define NETWORK_SEC_KEY       ""
+#define NETWORK_SEC_KEY       "Pallejah!EN"
 
 #endif

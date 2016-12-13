@@ -24,8 +24,8 @@
 #include "simplelink.h"
 
 // HTTP client libraries
-//#include <http/client/httpcli.h>
-//#include <http/client/common.h>
+#include <http/client/httpcli.h>
+#include <http/client/common.h>
 
 /*
  * Static variables (globals in this scope)
@@ -37,7 +37,7 @@ static unsigned long  g_ulGatewayIP = 0; //Network Gateway IP address
 static unsigned char  g_ucConnectionSSID[SSID_LEN_MAX+1]; //Connection SSID
 static unsigned char  g_ucConnectionBSSID[BSSID_LEN_MAX]; //Connection BSSID
 static unsigned char g_buff[MAX_BUFF_SIZE+1];
-//static long bytesReceived = 0; // variable to store the file size
+static long bytesReceived = 0; // variable to store the file size
 
 
 // Event-handler for Simplelink
@@ -525,6 +525,281 @@ long wlanStart(void)
 
     // Device started as station
     Report("Device started as station\n\r");
+
+    return SUCCESS;
+}
+
+static int FlushHTTPResponse(HTTPCli_Handle cli)
+{
+    const char *ids[2] = {
+                            HTTPCli_FIELD_NAME_CONNECTION, /* App will get connection header value. all others will skip by lib */
+                            NULL
+  	  	  	  	  	     };
+    char  buf[128];
+    int id;
+    int len = 1;
+    bool moreFlag = 0;
+    char ** prevRespFilelds = NULL;
+
+
+    prevRespFilelds = HTTPCli_setResponseFields(cli, ids);
+
+    // Read response headers
+    while ((id = HTTPCli_getResponseField(cli, buf, sizeof(buf), &moreFlag))
+            != HTTPCli_FIELD_ID_END)
+    {
+        if(id == 0)
+        {
+            if(!strncmp(buf, "close", sizeof("close")))
+            {
+                UART_PRINT("Connection terminated by server\n\r");
+            }
+        }
+    }
+
+    HTTPCli_setResponseFields(cli, (const char **)prevRespFilelds);
+
+    while(1)
+    {
+        len = HTTPCli_readResponseBody(cli, buf, sizeof(buf) - 1, &moreFlag);
+        ASSERT_ON_ERROR(len);
+
+        if ((len - 2) >= 0 && buf[len - 2] == '\r' && buf [len - 1] == '\n')
+        {
+            break;
+        }
+
+        if(!moreFlag)
+        {
+            break;
+        }
+    }
+    return SUCCESS;
+}
+
+static int GetData(HTTPCli_Handle cli)
+{
+    long          lRetVal = 0;
+    long          fileHandle = -1;
+    unsigned long Token = 0;
+    int id;
+    int len=0;
+    bool moreFlag = 0;
+    HTTPCli_Field fields[3] = {
+                                {HTTPCli_FIELD_NAME_HOST, HOST_NAME},
+                                {HTTPCli_FIELD_NAME_ACCEPT, "text/html, application/xhtml+xml, */*"},
+                                {NULL, NULL}
+                              };
+
+    const char *ids[4] = {
+                            HTTPCli_FIELD_NAME_CONTENT_LENGTH,
+                            HTTPCli_FIELD_NAME_TRANSFER_ENCODING,
+                            HTTPCli_FIELD_NAME_CONNECTION,
+                            NULL
+                         };
+
+
+    UART_PRINT("Start downloading the file\r\n");
+
+    // Set request fields
+    HTTPCli_setRequestFields(cli, fields);
+
+    memset(g_buff, 0, sizeof(g_buff));
+
+    // Make HTTP 1.1 GET request
+    lRetVal = HTTPCli_sendRequest(cli, HTTPCli_METHOD_GET, PREFIX_BUFFER, 0);
+    if (lRetVal < 0)
+    {
+        // error
+        ASSERT_ON_ERROR(TCP_SEND_ERROR);
+    }
+
+    // Test getResponseStatus: handle
+    lRetVal = HTTPCli_getResponseStatus(cli);
+    if (lRetVal != 200)
+    {
+        FlushHTTPResponse(cli);
+        if(lRetVal == 404)
+        {
+            ASSERT_ON_ERROR(FILE_NOT_FOUND_ERROR);
+        }
+        ASSERT_ON_ERROR(INVALID_SERVER_RESPONSE);
+    }
+
+    HTTPCli_setResponseFields(cli, ids);
+
+    // Read response headers
+    while ((id = HTTPCli_getResponseField(cli, (char *)g_buff, sizeof(g_buff), &moreFlag))
+               != HTTPCli_FIELD_ID_END)
+    {
+
+        if(id == 0)
+        {
+            UART_PRINT("Content length: %s\n\r", g_buff);
+        }
+        else if(id == 1)
+        {
+            if(!strncmp((const char *)g_buff, "chunked", sizeof("chunked")))
+            {
+                UART_PRINT("Chunked transfer encoding\n\r");
+            }
+        }
+        else if(id == 2)
+        {
+            if(!strncmp((const char *)g_buff, "close", sizeof("close")))
+            {
+                ASSERT_ON_ERROR(FORMAT_NOT_SUPPORTED);
+            }
+        }
+
+    }
+
+    // Open file to save the downloaded file
+    lRetVal = sl_FsOpen((_u8 *)FILE_NAME, FS_MODE_OPEN_WRITE, &Token, &fileHandle);
+    if(lRetVal < 0)
+    {
+        // File Doesn't exit create a new of 40 KB file
+        lRetVal = sl_FsOpen((unsigned char *)FILE_NAME, \
+                           FS_MODE_OPEN_CREATE(SIZE_40K, \
+                           _FS_FILE_OPEN_FLAG_COMMIT|_FS_FILE_PUBLIC_WRITE),
+                           &Token, &fileHandle);
+        ASSERT_ON_ERROR(lRetVal);
+
+    }
+
+
+
+    while(1)
+    {
+        len = HTTPCli_readResponseBody(cli, (char *)g_buff, sizeof(g_buff) - 1, &moreFlag);
+        if(len < 0)
+        {
+            // Close file without saving
+            lRetVal = sl_FsClose(fileHandle, 0, (unsigned char*) "A", 1);
+            return lRetVal;
+        }
+
+        lRetVal = sl_FsWrite(fileHandle, bytesReceived,
+                                (unsigned char *)g_buff, len);
+
+        if(lRetVal < len)
+        {
+            UART_PRINT("Failed during writing the file, Error-code: %d\r\n", \
+                         FILE_WRITE_ERROR);
+            // Close file without saving
+            lRetVal = sl_FsClose(fileHandle, 0, (unsigned char*) "A", 1);
+            return lRetVal;
+        }
+        bytesReceived +=len;
+
+        if ((len - 2) >= 0 && g_buff[len - 2] == '\r' && g_buff [len - 1] == '\n'){
+            break;
+        }
+
+        if(!moreFlag)
+        {
+            break;
+        }
+    }
+
+    //
+    // If user file has checksum which can be used to verify the temporary
+    // file then file should be verified
+    // In case of invalid file (FILE_NAME) should be closed without saving to
+    // recover the previous version of file
+    //
+
+    // Save and close file
+    UART_PRINT("Total bytes received: %d\n\r", bytesReceived);
+    lRetVal = sl_FsClose(fileHandle, 0, 0, 0);
+    ASSERT_ON_ERROR(lRetVal);
+
+    return SUCCESS;
+}
+
+
+long ServerFileDownload()
+{
+    long lRetVal = -1;
+    struct sockaddr_in addr;
+    HTTPCli_Struct cli;
+
+    //
+    // Following function configure the device to default state by cleaning
+    // the persistent settings stored in NVMEM (viz. connection profiles &
+    // policies, power policy etc)
+    //
+    // Applications may choose to skip this step if the developer is sure
+    // that the device is in its desired state at start of applicaton
+    //
+    // Note that all profiles and persistent settings that were done on the
+    // device will be lost
+    //
+    lRetVal = ConfigureSimpleLinkToDefaultState();
+    if(lRetVal < 0)
+    {
+        if (DEVICE_NOT_IN_STATION_MODE == lRetVal)
+        {
+            UART_PRINT("Failed to configure the device in its default state, "
+                            "Error-code: %d\n\r", DEVICE_NOT_IN_STATION_MODE);
+        }
+
+        LOOP_FOREVER();
+    }
+
+    UART_PRINT("Device is configured in default state \n\r");
+
+    //
+    // Assumption is that the device is configured in station mode already
+    // and it is in its default state
+    //
+    lRetVal = sl_Start(0, 0, 0);
+    if (lRetVal < 0 || ROLE_STA != lRetVal)
+    {
+        ASSERT_ON_ERROR(DEVICE_START_FAILED);
+    }
+
+    UART_PRINT("Device started as STATION \n\r");
+
+    // Connecting to WLAN AP - Set with static parameters defined at the top
+    // After this call we will be connected and have IP address
+    lRetVal = wlanConnect();
+
+    UART_PRINT("Connected to the AP: %s\r\n", SSID_NAME);
+
+    lRetVal = sl_NetAppDnsGetHostByName((signed char *)HOST_NAME,
+                                       strlen((const char *)HOST_NAME),
+                                       &g_ulDestinationIP,SL_AF_INET);
+    if(lRetVal < 0)
+    {
+        ASSERT_ON_ERROR(GET_HOST_IP_FAILED);
+    }
+
+    // Set up the input parameters for HTTP Connection
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(HOST_PORT);
+    addr.sin_addr.s_addr = sl_Htonl(g_ulDestinationIP);
+
+    // Testing HTTPCli open call: handle, address params only
+    HTTPCli_construct(&cli);
+    lRetVal = HTTPCli_connect(&cli, (struct sockaddr *)&addr, 0, NULL);
+    if (lRetVal < 0)
+    {
+        UART_PRINT("Connection to server failed\n\r");
+	    ASSERT_ON_ERROR(SERVER_CONNECTION_FAILED);
+    }
+    else
+    {
+        UART_PRINT("Connection to server created successfully\r\n");
+    }
+    // Download the file, verify the file and replace the exiting file
+    lRetVal = GetData(&cli);
+    if(lRetVal < 0)
+    {
+        UART_PRINT("Device couldn't download the file from the server\n\r");
+    }
+
+    HTTPCli_destruct(&cli);
 
     return SUCCESS;
 }

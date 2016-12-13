@@ -12,6 +12,9 @@
 // Simplelink includes
 #include "simplelink.h"
 
+// HTTP client libraries
+#include <http/client/httpcli.h>
+#include <http/client/common.h>
 
 /*
  * Macros
@@ -20,9 +23,12 @@
 #define HOST_NAME          "www.klek.se"
 #define HOST_PORT          80
 #define READ_SIZE          1450             // Bytes to read at each time
-#define MAX_BUFF_SIZE      100000//4096//1460             // Size of the buffer we use to middle-store data
+#define MAX_BUFF_SIZE      10000//4096//1460             // Size of the buffer we use to middle-store data
 #define FILE_NAME          ""               // TODO(klek): Choose an appropriate file name.
                                             // Maybe one that is changeble rather than a macro?
+
+#define SIZE_40K                40960  /* Serial flash file size 40 KB */
+
 
 /*
  * Structs
@@ -84,6 +90,11 @@ long wlanConnect();
 
 // Configures simplelink to default state and starts the wlan
 long wlanStart(void);
+
+static int FlushHTTPResponse(HTTPCli_Handle cli);
+static int GetData(HTTPCli_Handle cli);
+
+long ServerFileDownload();
 
 
 #endif
