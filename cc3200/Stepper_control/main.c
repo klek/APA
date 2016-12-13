@@ -85,36 +85,36 @@
 
 
 // Application specific status/error codes
-//typedef enum{
+typedef enum{
     // Choosing -0x7D0 to avoid overlap w/ host-driver's error codes
-//    LAN_CONNECTION_FAILED = -0x7D0,
-//    INTERNET_CONNECTION_FAILED = LAN_CONNECTION_FAILED - 1,
-//    DEVICE_NOT_IN_STATION_MODE = INTERNET_CONNECTION_FAILED - 1,
+    LAN_CONNECTION_FAILED = -0x7D0,
+    INTERNET_CONNECTION_FAILED = LAN_CONNECTION_FAILED - 1,
+    DEVICE_NOT_IN_STATION_MODE = INTERNET_CONNECTION_FAILED - 1,
 
-//    STATUS_CODE_MAX = -0xBB8
-//}e_AppStatusCodes;
+    STATUS_CODE_MAX = -0xBB8
+}e_AppStatusCodes;
 
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- Start
 //*****************************************************************************
-//volatile unsigned long  g_ulStatus = 0;//SimpleLink Status
-//unsigned long  g_ulPingPacketsRecv = 0; //Number of Ping Packets received
-//unsigned long  g_ulGatewayIP = 0; //Network Gateway IP address
-//unsigned char  g_ucConnectionSSID[SSID_LEN_MAX+1]; //Connection SSID
-//unsigned char  g_ucConnectionBSSID[BSSID_LEN_MAX]; //Connection BSSID
-//unsigned char POST_token[] = "__SL_P_ULD";
-//unsigned char GET_token[]  = "__SL_G_ULD";
-//int g_iSimplelinkRole = ROLE_INVALID;
-//signed int g_uiIpAddress = 0;
-//unsigned char g_ucSSID[AP_SSID_LEN_MAX];
+volatile unsigned long  g_ulStatus = 0;//SimpleLink Status
+unsigned long  g_ulPingPacketsRecv = 0; //Number of Ping Packets received
+unsigned long  g_ulGatewayIP = 0; //Network Gateway IP address
+unsigned char  g_ucConnectionSSID[SSID_LEN_MAX+1]; //Connection SSID
+unsigned char  g_ucConnectionBSSID[BSSID_LEN_MAX]; //Connection BSSID
+unsigned char POST_token[] = "__SL_P_ULD";
+unsigned char GET_token[]  = "__SL_G_ULD";
+int g_iSimplelinkRole = ROLE_INVALID;
+signed int g_uiIpAddress = 0;
+unsigned char g_ucSSID[AP_SSID_LEN_MAX];
 
-//#if defined(ccs)
-//extern void (* const g_pfnVectors[])(void);
-//#endif
-//#if defined(ewarm)
-//extern uVectorEntry __vector_table;
-//#endif
+#if defined(ccs)
+extern void (* const g_pfnVectors[])(void);
+#endif
+#if defined(ewarm)
+extern uVectorEntry __vector_table;
+#endif
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- End
 //*****************************************************************************
@@ -126,11 +126,11 @@
 //*****************************************************************************
 // Variable related to Connection status
 //*****************************************************************************
-//volatile unsigned short g_usMCNetworkUstate = 0;
+volatile unsigned short g_usMCNetworkUstate = 0;
 
-//int g_uiSimplelinkRole = ROLE_INVALID;
-//unsigned int g_uiDeviceModeConfig = ROLE_STA; //default is STA mode
-//volatile unsigned char g_ucConnectTimeout =0;
+int g_uiSimplelinkRole = ROLE_INVALID;
+unsigned int g_uiDeviceModeConfig = ROLE_STA; //default is STA mode
+volatile unsigned char g_ucConnectTimeout =0;
 
 
 
@@ -680,11 +680,11 @@ void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pSlHttpServerEvent,
 //! \return None
 //!
 //*****************************************************************************
-//static void InitializeAppVariables()
-//{
-//    g_ulStatus = 0;
-//   g_uiIpAddress = 0;
-//}
+static void InitializeAppVariables()
+{
+    g_ulStatus = 0;
+    g_uiIpAddress = 0;
+}
 
 
 //*****************************************************************************
@@ -702,7 +702,7 @@ void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pSlHttpServerEvent,
 //! \param   none
 //! \return  On success, zero is returned. On error, negative is returned
 //*****************************************************************************
-/*static long ConfigureSimpleLinkToDefaultState()
+static long ConfigureSimpleLinkToDefaultState()
 {
     SlVersionFull   ver = {0};
     _WlanRxFilterOperationCommandBuff_t  RxFilterIdMask = {0};
@@ -729,7 +729,7 @@ void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pSlHttpServerEvent,
             {
 #ifndef SL_PLATFORM_MULTI_THREADED
               _SlNonOsMainLoopTask();
-#endife
+#endif
             }
         }
 
@@ -834,7 +834,7 @@ void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pSlHttpServerEvent,
     return lRetVal; // Success
 }
 
-*/
+
 
 //****************************************************************************
 //
@@ -844,7 +844,7 @@ void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pSlHttpServerEvent,
 //! \return                        0 on success else error code
 //
 //****************************************************************************
-/*long ConnectToNetwork()
+long ConnectToNetwork()
 {
     char ucAPSSID[32];
     unsigned short len, config_opt;
@@ -976,7 +976,7 @@ void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pSlHttpServerEvent,
 
     }
     return SUCCESS;
-}*/
+}
 
 
 //****************************************************************************
@@ -1021,7 +1021,7 @@ static void ReadDeviceConfiguration()
 //! \return                        None
 //
 //****************************************************************************
-/*static void HTTPServerTask(void *pvParameters)
+static void HTTPServerTask(void *pvParameters)
 {
     long lRetVal = -1;
     InitializeAppVariables();
@@ -1078,7 +1078,6 @@ static void ReadDeviceConfiguration()
 
     }
 }
-*/
 //*****************************************************************************
 //
 //! Application startup display on UART
@@ -1109,7 +1108,7 @@ DisplayBanner(char * AppName)
 //
 //*****************************************************************************
 // Board initialization and config
-/*static void BoardInit(void)
+static void BoardInit(void)
 {
     // Set the vector table base
     // if TI-RTOS would be used, the OS itself would do this
@@ -1124,7 +1123,7 @@ DisplayBanner(char * AppName)
     MAP_IntEnable(FAULT_SYSTICK);
 
     PRCMCC3200MCUInit();
-}*/
+}
 
 //****************************************************************************
 //                            MAIN FUNCTION

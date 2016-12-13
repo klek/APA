@@ -24,8 +24,8 @@
 #include "simplelink.h"
 
 // HTTP client libraries
-//#include <http/client/httpcli.h>
-//#include <http/client/common.h>
+#include <http/client/httpcli.h>
+#include <http/client/common.h>
 
 /*
  * Static variables (globals in this scope)
@@ -39,7 +39,7 @@ static unsigned char  g_ucConnectionBSSID[BSSID_LEN_MAX]; //Connection BSSID
 static unsigned char g_buff[MAX_BUFF_SIZE+1];
 //static long bytesReceived = 0; // variable to store the file size
 
-/*
+
 // Event-handler for Simplelink
 // NOTE(klek): Copied from examples
 void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent)
@@ -528,4 +528,3 @@ long wlanStart(void)
 
     return SUCCESS;
 }
-*/
