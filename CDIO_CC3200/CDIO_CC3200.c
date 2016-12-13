@@ -200,6 +200,8 @@ void moveTask(UArg arg0, UArg arg1)
 				}
 			}
     	}
+
+    	read_file(coord,uart, &addedCommands);
     }
 }
 
@@ -212,7 +214,7 @@ void read_file(struct command coord[], UART_Handle uart, unsigned int *addedComm
 
 	UART_read(uart, &msg, 1);
 
-	while((int) msg != EOF)
+	while(msg != 'E')
 	{
 		switch (msg)
 		{
