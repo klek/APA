@@ -78,13 +78,14 @@ static OsiMsgQ_t dataMsg;
 /*
  * External stuff
  */
+/*
 extern void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent);
 extern void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent);
 extern void SimpleLinkGeneralEventHandler(SlDeviceEvent_t *pDevEvent);
 extern void SimpleLinkSockEventHandler(SlSockEvent_t *pSock);
 extern void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pHttpEvent,
                                          SlHttpServerResponse_t *pHttpResponse);
-
+*/
 
 
 /*

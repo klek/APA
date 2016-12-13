@@ -24,8 +24,8 @@
 #include "simplelink.h"
 
 // HTTP client libraries
-#include <http/client/httpcli.h>
-#include <http/client/common.h>
+//#include <http/client/httpcli.h>
+//#include <http/client/common.h>
 
 /*
  * Static variables (globals in this scope)
