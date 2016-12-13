@@ -61,7 +61,7 @@ extern "C" {
   */
 #define Board_LED1                   CC3200_LAUNCHXL_LED_D7
 #define Board_LED2                   CC3200_LAUNCHXL_LED_D7
-#define Board_BUTTON0                CC3200_LAUNCHXL_SW2
+//#define Board_BUTTON0                CC3200_LAUNCHXL_SW2
 #define Board_BUTTON1                CC3200_LAUNCHXL_SW3
 #define BOARD_INT0				 	 CC3200_LAUNCHXL_GPIO28
 #define BOARD_INT1					 CC3200_LAUNCHXL_GPIO22

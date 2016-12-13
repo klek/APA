@@ -46,11 +46,14 @@
 #define TASKSTACKSIZE   100000
 #define QUAD 	1
 #define DIR2	8
-#define SCALE 	1
+#define SCALE 	10
 #define COORDSIZE 10000
 #define COMMANDSIZE 6
 #define MAXDUTY 1650
 #define MINDUTY 800
+#define PENDOWN 1500
+#define PENUP 1000
+#define PENMAX 800
 #define MAXSTEPSY 100000 // Set correct value after measurements
 #define MAXSTEPSX 100000 // Set correct value after measurements
 
@@ -78,12 +81,14 @@ struct command{
 struct step steps;
 int originFlagX = 0; // 0 - Not origin. 1 - Origin
 int originFlagY = 0; // 0 - Not origin. 1 - Origin
+int insertPen = 1;
 
 Task_Struct task0Struct;
 Char task0Stack[TASKSTACKSIZE];
 
 void brytarIntY(unsigned int index);
 void brytarIntX(unsigned int index);
+void InsertPenInt(unsigned int index);
 static void move(unsigned char direction);
 void read_file(struct command coord[], UART_Handle uart, unsigned int *addedCommands);
 void moveToOrigin();
@@ -113,6 +118,12 @@ void brytarIntX(unsigned int index)
 	IntPendClear(INT_GPIOA3);
 }
 
+void InsertPenInt(unsigned int index)
+{
+	insertPen = 0;
+	IntPendClear(INT_GPIOA1);
+}
+
 
 void moveTask(UArg arg0, UArg arg1)
 {
@@ -137,7 +148,6 @@ void moveTask(UArg arg0, UArg arg1)
 	/* Initiate the PWM */
 	uint16_t   pwmPeriod = 20000;      // Period and duty in microseconds
 	uint16_t   duty = 1000;
-	uint16_t   dutyInc = 50;
 	PWM_Params_init(&params);
 	params.period = pwmPeriod;
 	pwm1 = PWM_open(Board_PWM0, &params);
@@ -165,13 +175,30 @@ void moveTask(UArg arg0, UArg arg1)
 	const char Prompt[] = "\fHeeeello!\r\n";
 	UART_write(uart, Prompt, sizeof(Prompt));
 
+	PWM_setDuty(pwm1, PENDOWN); // Set the lowest height for servo motor to insert pen
+
+	while(insertPen)
+	{
+		Task_sleep(50);
+	}
+	PWM_setDuty(pwm1, PENUP); // Set the lowest height for servo motor to insert pen
 	read_file(coord,uart, &addedCommands);
 
 	int nCommands; // Iterator for coord
     while (1)
     {
+
     	for(nCommands = 0; nCommands < addedCommands; nCommands++) // Step through all commands in coord
     	{
+    		if (coord[nCommands].pen == 'D')
+    		{
+    			PWM_setDuty(pwm1, PENDOWN);
+    		}
+			else if (coord[nCommands].pen == 'U')
+			{
+				PWM_setDuty(pwm1, PENUP);
+			}
+    		Task_sleep(100);
 			// Move to start coordinate
 			while((steps.x != coord[nCommands].x) || (steps.y != coord[nCommands].y))
 			{
@@ -200,6 +227,8 @@ void moveTask(UArg arg0, UArg arg1)
 				}
 			}
     	}
+
+    	PWM_setDuty(pwm1, PENUP); // Raise the pen
 
     	read_file(coord,uart, &addedCommands);
     }
@@ -231,7 +260,7 @@ void read_file(struct command coord[], UART_Handle uart, unsigned int *addedComm
 				nCommands++; // Increase number of commands in coord
 				break;
 
-			case 'N': // Character for pen down
+			case 'D': // Character for pen down
 
 				for(i = 0; i < COMMANDSIZE; i++) // Read input chars into temp array
 				{
@@ -239,7 +268,7 @@ void read_file(struct command coord[], UART_Handle uart, unsigned int *addedComm
 					temp[i] = msg;
 				}
 				charToInt(temp, &coord[nCommands].x, &coord[nCommands].y); // Convert and scale chars to x and y coordinates in short ints
-				coord[nCommands].pen = 'N';
+				coord[nCommands].pen = 'D';
 				nCommands++; // Increase number of commands in coord
 				break;
 
@@ -322,6 +351,7 @@ static void move(unsigned char direction)
 			// Both motors should spin counterclockwise
 			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
 			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
+			steps.xScale = steps.xScale + SCALE;
 			steps.x++;
 			originFlagX = 0;
     	}
@@ -333,6 +363,7 @@ static void move(unsigned char direction)
 			// Left motor should spin clockwise, right motor should spin counterclockwise
 			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
 			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
+			steps.yScale = steps.yScale + SCALE;
 			steps.y++;
 			originFlagY = 0;
     	}
@@ -344,6 +375,7 @@ static void move(unsigned char direction)
     		// Both motors should spin clockwise
 			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
 			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
+			steps.xScale = steps.xScale - SCALE;
 			steps.x--;
     	}
     	break;
@@ -353,6 +385,7 @@ static void move(unsigned char direction)
     	{
 			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
 			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
+			steps.yScale = steps.yScale - SCALE;
 			steps.y--;
     	}
     	break;
@@ -404,10 +437,12 @@ int main(void)
 	/* install Button callback */
 	GPIO_setCallback(BOARD_INT0, brytarIntX); // GPIO28 - Pin 18
 	GPIO_setCallback(BOARD_INT1, brytarIntY); // GPIO22 - Pin 15
+	GPIO_setCallback(Board_BUTTON1, InsertPenInt); // GPIO13
 
 	/* Enable interrupts */
 	GPIO_enableInt(BOARD_INT0);
 	GPIO_enableInt(BOARD_INT1);
+	GPIO_enableInt(Board_BUTTON1);
 
     System_printf("Starting the example\nSystem provider is set to SysMin. "
                   "Halt the target to view any SysMin contents in ROV.\n");

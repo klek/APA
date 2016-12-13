@@ -156,7 +156,7 @@ void CC3200_LAUNCHXL_initGeneral(void)
 GPIO_PinConfig gpioPinConfigs[] = {
     /* input pins with callbacks */
     /* CC3200_LAUNCHXL_SW2 */
-    GPIOCC3200_GPIO_22 | GPIO_CFG_INPUT | GPIO_CFG_IN_INT_RISING,
+    //GPIOCC3200_GPIO_22 | GPIO_CFG_INPUT | GPIO_CFG_IN_INT_RISING,
     /* CC3200_LAUNCHXL_SW3 */
     GPIOCC3200_GPIO_13 | GPIO_CFG_INPUT | GPIO_CFG_IN_INT_RISING,
 	/* CC3200_LAUNCHXL_GPIO24 */
@@ -187,8 +187,10 @@ GPIO_PinConfig gpioPinConfigs[] = {
  *       reduce memory usage (if placed at end of gpioPinConfigs array).
  */
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
-    NULL,  /* CC3200_LAUNCHXL_SW2 */
-    NULL   /* CC3200_LAUNCHXL_SW3 */
+    //NULL,  /* CC3200_LAUNCHXL_SW2 */
+    NULL,   /* CC3200_LAUNCHXL_SW3 */
+	NULL,
+	NULL
 };
 
 /* The device-specific GPIO_config structure */
