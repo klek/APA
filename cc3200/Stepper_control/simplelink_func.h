@@ -50,40 +50,40 @@ typedef enum{
 
 // Event-handler for Simplelink
 // NOTE(klek): Copied from examples
-void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent);
+//void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent);
 
 
 // Network actions are handled here such as IP acquisition/release etc
 // NOTE(klek): Copied from examples
-void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent);
+//void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent);
 
 
 // Handles general events
 // NOTE(klek): Copied from examples
-void SimpleLinkGeneralEventHandler(SlDeviceEvent_t *pDevEvent);
+//void SimpleLinkGeneralEventHandler(SlDeviceEvent_t *pDevEvent);
 
 
 // Handles socket events.
 // NOTE(klek): Copied from examples
-void SimpleLinkSockEventHandler(SlSockEvent_t *pSock);
+//void SimpleLinkSockEventHandler(SlSockEvent_t *pSock);
 
 
 // Handles HTTP-server events
 // NOTE(klek): Copied from examples
-void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pHttpEvent,
-                                  SlHttpServerResponse_t *pHttpResponse);
+//void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pHttpEvent,
+//                                  SlHttpServerResponse_t *pHttpResponse);
 
 // Configures simplelink to default state
 // NOTE(klek): Copied from examples
-static long ConfigureSimpleLinkToDefaultState();
+//static long ConfigureSimpleLinkToDefaultState();
 
 // Connects to the network specified by the macros
 // NOTE(klek): Copied from examples
 // NOTE(klek): Modified with network credentials
-long wlanConnect();
+//long wlanConnect();
 
 // Configures simplelink to default state and starts the wlan
-long wlanStart(void);
+//long wlanStart(void);
 
 
 #endif

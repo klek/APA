@@ -34,14 +34,14 @@
 /*
  * Global variables needed for CCS
  */
-#if defined(ccs)
-extern void (* const g_pfnVectors[])(void);
-#endif
+//#if defined(ccs)
+//extern void (* const g_pfnVectors[])(void);
+//#endif
 
 /*
  * Local function prototypes
  */
-static void PinMuxConfig(void);
+//static void PinMuxConfig(void);
 
 /*
  * Tasks
@@ -51,7 +51,7 @@ static void PinMuxConfig(void);
 /*
  * Local functions
  */
-
+/*
 // Board initialization and config
 static void BoardInit(void)
 {
@@ -212,7 +212,7 @@ void SteppingRoutine()
          * D6 - Orange - Pin_01 - STEP
          * D7 - Red - Pin_64 - DIR2
          */
-
+/*
         // Check how many steps has been taken
         if ( stepCount >= 0 && stepCount < 2800 ) {
             // Increment the stepCounter
@@ -259,7 +259,7 @@ void SteppingRoutine()
     }
 #endif
 }
-
+*/
 /*
  * Main function
  */
@@ -281,6 +281,7 @@ void SteppingRoutine()
     return 0;
 }
 */
+/*
 static void PinMuxConfig(void)
 {
     //
@@ -314,3 +315,4 @@ static void PinMuxConfig(void)
     MAP_GPIODirModeSet(GPIOA1_BASE, 0x8, GPIO_DIR_MODE_OUT);
 }
 
+*/
