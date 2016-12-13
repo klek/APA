@@ -12,15 +12,24 @@
 // Simplelink includes
 #include "simplelink.h"
 
+// HTTP client libraries
+#include <http/client/httpcli.h>
+#include <http/client/common.h>
+
+// Other
+#include "movement.h"
 
 /*
  * Macros
  */
-#define PREFIX_BUFFER      40960            // 40 kB file size
 #define HOST_NAME          "www.klek.se"
 #define HOST_PORT          80
+#define HOST_LOC_1         "/downloads/part01.txt"
+#define HOST_LOC_2         "/downloads/part02.txt"
+
+#define FILE_SIZE          40960            // 40 kB file size
 #define READ_SIZE          1450             // Bytes to read at each time
-#define MAX_BUFF_SIZE      100000//4096//1460             // Size of the buffer we use to middle-store data
+#define MAX_BUFF_SIZE      1460             // Size of the buffer we use to middle-store data
 #define FILE_NAME          ""               // TODO(klek): Choose an appropriate file name.
                                             // Maybe one that is changeble rather than a macro?
 
@@ -85,5 +94,20 @@ long wlanConnect();
 // Configures simplelink to default state and starts the wlan
 long wlanStart(void);
 
+// Configures the HTTP connection with valid data and tests it
+long setupHTTPConnection(HTTPCli_Struct* cli, struct sockaddr_in* adr);
+
+// Fetches data through HTTP-request. After that it parses the data
+// and puts it in the specified array
+long fetchAndParseData(HTTPCli_Struct* cli, struct order* buff, unsigned int size);
+
+// Flushes the HTTP response
+// NOTE(klek): Copied from examples
+static int flushHTTPResponse(HTTPCli_Handle cli);
+
+// Converts chars to integers.
+// Used to decode the ascii code recieved from HTTP request into
+// orders performed by the CNC
+static void charToInt(char temp[], short int *xCoord, short int *yCoord)
 
 #endif

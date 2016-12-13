@@ -9,6 +9,7 @@
 // General
 #include "simplelink_func.h"
 #include "network_cred.h"
+#include "movement.h"
 
 // C-libraries
 #include <string.h>
@@ -24,8 +25,8 @@
 #include "simplelink.h"
 
 // HTTP client libraries
-//#include <http/client/httpcli.h>
-//#include <http/client/common.h>
+#include <http/client/httpcli.h>
+#include <http/client/common.h>
 
 /*
  * Static variables (globals in this scope)
@@ -36,7 +37,7 @@ static unsigned long  g_ulDestinationIP; // IP address of destination server
 static unsigned long  g_ulGatewayIP = 0; //Network Gateway IP address
 static unsigned char  g_ucConnectionSSID[SSID_LEN_MAX+1]; //Connection SSID
 static unsigned char  g_ucConnectionBSSID[BSSID_LEN_MAX]; //Connection BSSID
-static unsigned char g_buff[MAX_BUFF_SIZE+1];
+//static unsigned char g_buff[MAX_BUFF_SIZE+1];
 //static long bytesReceived = 0; // variable to store the file size
 
 
@@ -527,4 +528,252 @@ long wlanStart(void)
     Report("Device started as station\n\r");
 
     return SUCCESS;
+}
+
+// Configures the HTTP connection with valid data and tests it
+long setupHTTPConnection(HTTPCli_Struct* cli, struct sockaddr_in* adr)
+{
+    // Initialize variables
+    long retVal = -1;
+
+    retVal = sl_NetAppDnsGetHostByName((signed char *)HOST_NAME,
+                                       strlen((const char *)HOST_NAME),
+                                       &g_ulDestinationIP, SL_AF_INET);
+    if ( retVal < 0 ) {
+        Report("Getting host ip failed\n\r");
+    }
+
+    // Setup the socket address
+    adr->sin_family = AF_INET;
+    adr->sin_port = htons(HOST_PORT);
+    adr->sin_addr.s_addr = sl_Htonl(g_ulDestinationIP);
+
+    // Test the connection
+    HTTPCli_construct(cli);
+    retVal = HTTPCli_connect(cli, (struct sockaddr *)adr, 0, NULL);
+    if ( retVal < 0 ) {
+        Report("Connection to server failed\n\r");
+    }
+    else {
+        Report("Connection to server created successfully\n\r");
+    }
+
+    // Lets return success
+    return SUCCESS;    
+}
+
+// Fetches data through HTTP-request. After that it parses the data
+// and puts it in the specified array
+long fetchAndParseData(HTTPCli_Struct* cli, struct order* buff, unsigned int size)
+{
+    // Start by checking if size is valid
+    if ( size < 1 ) {
+        Report("Buffer size is invalid\n\r");
+        return FAILURE;
+    }
+    else {
+        // Setup variables
+        long retVal = -1;
+        int id = 0;
+        bool moreData = 0;
+        char httpBuff[MAX_BUFF_SIZE + 1];
+        unsigned int orderIndex = 0;
+
+        // Setup HTTP-fields
+        HTTPCli_Field fields[3] = {
+            {HTTPCli_FIELD_NAME_HOST, HOST_NAME},
+            {HTTPCli_FIELD_NAME_ACCEPT, "text/html, application/xhtml+xml, */*"},
+            {NULL, NULL}                              
+        };
+
+        // Setup ids
+        const char* ids[4] = {
+                            HTTPCli_FIELD_NAME_CONTENT_LENGTH,
+                            HTTPCli_FIELD_NAME_TRANSFER_ENCODING,
+                            HTTPCli_FIELD_NAME_CONNECTION,
+                            NULL
+        };
+
+        // Set request fields
+        HTTPCli_setRequestFields(cli, fields);
+
+        // memset the array to 0??
+
+        // Make the request
+        retVal = HTTPCli_sendRequest(cli, HTTPCli_METHOD_GET, HOST_LOC_1, 0);
+        if ( retVal < 0 ) {
+            Report("TCP-send error");
+            return FAILURE;
+        }
+
+        // Test the response
+        retVal = HTTPCli_getResponseStatus(cli);
+        if ( retVal != 200 ) {
+            flushHTTPResponse(cli);
+            if ( retVal == 404 ) {
+                Report("File not found\n\r");
+                return FAILURE;
+            }
+            return FAILURE;
+        }
+
+        // Apparently response was good
+        // Request more
+        HTTPCli_setResponseFields(cli, ids);
+
+        // Read the response headers
+        while ( ( id = HTTPCli_getResponseField(cli, (char *)httpBuff, sizeof(httpBuff), &moreData))
+                != HTTPCli_FIELD_ID_END )
+        {
+            if ( id == 0 ) {
+
+            }
+            else if ( id == 1 ) {
+                if(!strncmp((const char *)httpBuff, "chunked", sizeof("chunked")))
+                {
+                    Report("Chunked transfer encoding\n\r");
+                }
+
+            }
+            else if ( id == 2 ) {
+                if ( !strncmp((const char*)httpBuff, "close", sizeof("close")) ){
+                    Report("Unsupported file-format\n\r");
+                    return FAILURE;
+                }
+            }
+        }
+
+        // Fetch the data
+        // TODO(klek): Fix this loop
+        while (1) {
+            // Request data
+            retVal = HTTPCli_readResponseBody(cli, (char *)httpBuff, sizeof(httpBuff) - 1, &moreData);
+
+            // Checked if we got any data
+            if ( retVal < 0 ) {
+                Report("File was empty\n\r");
+                return FAILURE;
+            }
+
+            // Debugging purpose
+            Report("Data recieved: %s\n\r", httpBuff);
+
+            // Parse the data and put it into our order array
+            // How do we find the first command?
+            //
+            int i = 0;
+            for ( ; i < retVal ; ) {
+
+                // Search for known commands
+                switch(httpBuff[i]) {
+                    case 'U':
+                        // We have a command to move without drawing
+                        // find the coordinates
+                        int j = 0;
+                        for ( ; j < COORD_SIZE ; j++ ) {
+                            
+                        }
+                        for ( j = 0 ; j < COORD_SIZE ; j++ ) {
+                            
+                        }
+                        break;
+
+                    case 'D':
+                        // We have a command to move as we are drawing
+                        // find the coordinates
+                        break;
+
+                    case 'E':
+                        // End of file, ie print should be done know
+                        break;
+
+                    case 'O':
+                        // Move to origin, shouldn't be needed??
+                        break;
+                    default:
+                        // No valid command was found, increment counter
+                        i++;
+                        break;
+                }
+            }
+        }
+    }
+}
+
+// Flushes the HTTP response
+// NOTE(klek): Copied from examples
+static int flushHTTPResponse(HTTPCli_Handle cli)
+{
+    const char *ids[2] = {
+                            HTTPCli_FIELD_NAME_CONNECTION, /* App will get connection header value. all others will skip by lib */
+                            NULL
+                         };
+    char  buf[128];
+    int id;
+    int len = 1;
+    bool moreFlag = 0;
+    char ** prevRespFilelds = NULL;
+
+                            
+    prevRespFilelds = HTTPCli_setResponseFields(cli, ids);
+
+    // Read response headers
+    while ((id = HTTPCli_getResponseField(cli, buf, sizeof(buf), &moreFlag))
+            != HTTPCli_FIELD_ID_END)
+    {
+        if(id == 0)
+        {
+            if(!strncmp(buf, "close", sizeof("close")))
+            {
+                UART_PRINT("Connection terminated by server\n\r");
+            }
+        }
+    }
+
+    HTTPCli_setResponseFields(cli, (const char **)prevRespFilelds);
+
+    while(1)
+    {
+        len = HTTPCli_readResponseBody(cli, buf, sizeof(buf) - 1, &moreFlag);
+        ASSERT_ON_ERROR(len);
+
+        if ((len - 2) >= 0 && buf[len - 2] == '\r' && buf [len - 1] == '\n')
+        {
+            break;
+        }
+
+        if(!moreFlag)
+        {
+            break;
+        }
+    }
+    return SUCCESS;
+}
+
+
+// Converts chars to integers.
+// Used to decode the ascii code recieved from HTTP request into
+// orders performed by the CNC
+static void charToInt(char temp[], short int *xCoord, short int *yCoord)
+{
+    int i;
+    for(i = 0; i < COMMANDSIZE; i++)
+    {
+        if ((temp[i] < 58) && (temp[i] > 47))
+        {
+            temp[i] = temp[i]-48;
+        }
+        else
+        {
+            // Error message?
+        }
+    }
+
+    // Decode the message coordinates to ints
+    *xCoord = 100*temp[0]+10*temp[1]+temp[2];
+    *yCoord = 100*temp[3]+10*temp[4]+temp[5];
+
+    // Scale millimeters to steps of the motors
+    *xCoord = (*xCoord)*SCALE;
+    *yCoord = (*yCoord)*SCALE;
 }

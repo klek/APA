@@ -133,7 +133,7 @@ unsigned int g_uiDeviceModeConfig = ROLE_STA; //default is STA mode
 volatile unsigned char g_ucConnectTimeout =0;
 
 
-
+/*
 #ifdef USE_FREERTOS
 //*****************************************************************************
 // FreeRTOS User Hook Functions enabled in FreeRTOSConfig.h
@@ -208,7 +208,7 @@ void vApplicationStackOverflowHook( OsiTaskHandle *pxTask,
     }
 }
 #endif //USE_FREERTOS
-
+*/
 
 
 //*****************************************************************************

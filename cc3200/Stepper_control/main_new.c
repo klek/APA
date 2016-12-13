@@ -24,6 +24,10 @@
 #include "simplelink.h"
 #include "simplelink_func.h"
 
+// HTTP client libraries
+#include <http/client/httpcli.h>
+#include <http/client/common.h>
+
 // Free rtos / TI-RTOS includes
 #include "osi.h"
 
@@ -34,18 +38,22 @@
 // Special headers
 #include "movement.h"
 #include "gpio_func.h"
+#include "rtos_callbacks.h"
 
 /*
  * Macros
  */
 #define WORK_TASK_STACK_SIZE      (2048)
-#define DATA_TASK_STACK_SIZE      (2048)
+#define DATA_TASK_STACK_SIZE      (4096)
 #define INIT_TASK_STACK_SIZE      (512)
 #define WORK_TASK_PRIORITY        (3)
 #define DATA_TASK_PRIORITY        (1)
 #define INIT_TASK_PRIORITY        (2)
 
 #define INTERRUPT_PRIORITY        10
+
+#define ORDER_BUFFER_SIZE         100 // This would be 100 orders
+
 
 // Macros for bits in status vector
 #define X_HOME                    (1 << 0)
@@ -78,15 +86,6 @@ static OsiMsgQ_t dataMsg;
 /*
  * External stuff
  */
-/*
-extern void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent);
-extern void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent);
-extern void SimpleLinkGeneralEventHandler(SlDeviceEvent_t *pDevEvent);
-extern void SimpleLinkSockEventHandler(SlSockEvent_t *pSock);
-extern void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pHttpEvent,
-                                         SlHttpServerResponse_t *pHttpResponse);
-*/
-
 
 /*
  * Function prototypes
@@ -253,6 +252,9 @@ static void xAxisHandler(void)
 
     // Clear the interrupt
     gpioClearInt(HOME_X_AXIS);
+
+    // TODO(klek): Disable the interrupt here and reenable it in the task
+    // to be able to correct the position and get a safety switch
 }
 
 // Interrupt handler for y-axis switch
@@ -272,6 +274,9 @@ static void yAxisHandler(void)
 
     // Clear the interrupt
     gpioClearInt(HOME_Y_AXIS);
+
+    // TODO(klek): Disable the interrupt here and reenable it in the task
+    // to be able to correct the position and get a safety switch
 }
 
 // This task should move printer head to homing position
@@ -363,7 +368,14 @@ static void workTask(void* params)
 // orders to be carried out by workTask
 static void dataTask(void* params)
 {
+    // Variables used by this task
     long retVal = -1;
+    struct sockaddr_in address;
+    HTTPCli_Struct cli;
+
+    // Dummy declaration of 
+    struct order orderBuffer[ORDER_BUFFER_SIZE];
+    
     // Start the wlan
     retVal = wlanStart();
     // ERROR CHECKING
@@ -377,5 +389,22 @@ static void dataTask(void* params)
     }
 
     // We should now be connected to the network
-//    Report("Connected to 
+
+    // Create the HTTP connection
+    // and verify that it works
+    retVal = setupHTTPConnection(&cli, &address);
+    if ( retVal < 0 ) {
+        Report("Failed to create and setup the HTTP-connection\n\r");
+    }
+    
+    // Gather data from the web, by using the HTTP connection
+    // After this call, the orderBuffer should be full of data.
+    // retVal should contain the number of elements
+    retVal = fetchAndParseData(&cli, (struct order*)&orderBuffer, ORDER_BUFFER_SIZE);
+
+    // Put this data in the message q to workTask
+    // Maybe give this task priority to be able to fill the queue
+    // and gather more data while workTask is working??
+
+    while (1) ;
 }

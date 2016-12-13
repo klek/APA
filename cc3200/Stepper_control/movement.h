@@ -18,8 +18,8 @@ struct position {
     // Should simply contain my position in x and y
     // could also contain the value for steps??
 
-    unsigned int xPosition;
-    unsigned int yPosition;
+    unsigned short int xPosition;
+    unsigned short int yPosition;
 };
 
 // Struct for orders
@@ -27,8 +27,8 @@ struct order {
     //struct position goTo;
 
     // Possibly use this instead of the struct
-    unsigned int xCoord;
-    unsigned int yCoord;
+    unsigned short int xCoord;
+    unsigned short int yCoord;
 
     unsigned char pen;
 };
