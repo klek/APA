@@ -10,6 +10,12 @@
 #define MOVEMENT_H
 
 /*
+ * Macros
+ */
+#define COORD_SIZE         6 // 3 digits for x-coord + 3 digits for y-coord
+#define SIZE_OF_ORDER      5 // The size we want the order struct to be...sizeof() says 6...
+
+/*
  * Structs
  */
 // The struct for movement
@@ -23,14 +29,20 @@ struct position {
 };
 
 // Struct for orders
+// Goal is to have only 5 bytes of space occupied
+// This will mainly be used for typecasting in arrays
+// NOTE(klek): Since our resolution is mm, the largest number of a
+// A4-paper is 210x300
+// To represent this we need 9 bits for the largest coordinate
+// This gives 18 bits total for 2 coordinates. which would need 3 bytes leaving
+// a rest of 6 bits unused...
 struct order {
     //struct position goTo;
 
+    unsigned char pen;
     // Possibly use this instead of the struct
     unsigned short int xCoord;
     unsigned short int yCoord;
-
-    unsigned char pen;
 };
 
 // Possible direction for the move-function
@@ -41,10 +53,12 @@ enum directions {
     NEG_Y
 };
 
-// Return values for the checkPen function
+// Possible values for the pen field in order struct
+// Could also be return value for checkPen-function
 enum {
+    PEN_UP,
     PEN_DOWN,
-    PEN_UP
+    END_OF_DATA
 };
 
 

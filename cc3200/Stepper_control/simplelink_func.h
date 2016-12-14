@@ -99,7 +99,8 @@ long setupHTTPConnection(HTTPCli_Struct* cli, struct sockaddr_in* adr);
 
 // Fetches data through HTTP-request. After that it parses the data
 // and puts it in the specified array
-long fetchAndParseData(HTTPCli_Struct* cli, struct order* buff, unsigned int size);
+long fetchAndParseData(HTTPCli_Struct* cli, unsigned char* buff/*struct order* buff*/, unsigned int size);
+//long fetchAndParseData(HTTPCli_Struct* cli, struct order* buff, unsigned int size);
 
 // Flushes the HTTP response
 // NOTE(klek): Copied from examples
@@ -108,6 +109,7 @@ static int flushHTTPResponse(HTTPCli_Handle cli);
 // Converts chars to integers.
 // Used to decode the ascii code recieved from HTTP request into
 // orders performed by the CNC
-static void charToInt(char temp[], short int *xCoord, short int *yCoord)
+static unsigned int charToInt(unsigned char* temp, unsigned char size);
+
 
 #endif

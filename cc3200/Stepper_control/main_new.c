@@ -44,7 +44,7 @@
  * Macros
  */
 #define WORK_TASK_STACK_SIZE      (2048)
-#define DATA_TASK_STACK_SIZE      (4096)
+#define DATA_TASK_STACK_SIZE      (2048)
 #define INIT_TASK_STACK_SIZE      (512)
 #define WORK_TASK_PRIORITY        (3)
 #define DATA_TASK_PRIORITY        (1)
@@ -52,7 +52,7 @@
 
 #define INTERRUPT_PRIORITY        10
 
-#define ORDER_BUFFER_SIZE         100 // This would be 100 orders
+#define ORDER_BUFFER_SIZE         10000 // This would be 100 orders
 
 
 // Macros for bits in status vector
@@ -75,10 +75,13 @@ extern void (* const g_pfnVectors[])(void);
  * Static variables (global)
  */
 // NOTE(klek): Maybe this should be in a separate file?
-static struct position myPos;
+//static struct position myPos;
 // Status variable to indicate interrupts
 // NOTE(klek): Maybe increase this one to keep track of when to get more data from web?
 static unsigned char status;
+// The order buffer is declared outside off tasks
+// NOTE(klek):
+static unsigned char orderBuffer[ORDER_BUFFER_SIZE * SIZE_OF_ORDER];
 
 static OsiMsgQ_t workMsg;
 static OsiMsgQ_t dataMsg;
@@ -108,6 +111,9 @@ static void workTask(void* params);
 
 // This task should gather data for the workTask
 static void dataTask(void* params);
+
+// Find home function to move us to origo
+static short int goToHome(void);
 
 /*
  * The main function
@@ -168,8 +174,8 @@ void main(void)
         while(1);
     }
     // Enable both interrupts
-    gpioEnableInterrupts(HOME_X_AXIS);
-    gpioEnableInterrupts(HOME_Y_AXIS);
+    gpioEnableInterrupt(HOME_X_AXIS);
+    gpioEnableInterrupt(HOME_Y_AXIS);
     
     /*
      * Create tasks
@@ -255,6 +261,7 @@ static void xAxisHandler(void)
 
     // TODO(klek): Disable the interrupt here and reenable it in the task
     // to be able to correct the position and get a safety switch
+    gpioDisableInterrupt(HOME_X_AXIS);
 }
 
 // Interrupt handler for y-axis switch
@@ -277,6 +284,7 @@ static void yAxisHandler(void)
 
     // TODO(klek): Disable the interrupt here and reenable it in the task
     // to be able to correct the position and get a safety switch
+    gpioDisableInterrupt(HOME_Y_AXIS);
 }
 
 // This task should move printer head to homing position
@@ -290,27 +298,6 @@ static void initTask(void* params)
     // TODO(klek): Implement this function instead of loops
     //goToPos(HOME, &myPos);
 
-    // Start by going to X_HOME
-    // Wait for status-flag X_HOME to come true in status reg
-    while ( !(status & X_HOME) ) {
-        move(NEG_X);
-    }
-    // We should now be at zero x-position
-    myPos.xPosition = 0;
-
-    // Follow up by going to Y_HOME
-    while ( !(status & Y_HOME) ) {
-        move(NEG_Y);
-    }
-    // We should now be at zero y-position
-    myPos.yPosition = 0;
-
-    // Print out in console
-    Report("Home position found\n\r");
-    
-    // Indicate for workTask that we can start working
-    status |= HOME_FOUND;
-
     while (1) {
         osi_Sleep(100);
     }
@@ -321,12 +308,32 @@ static void initTask(void* params)
 static void workTask(void* params)
 {
     // Task setup
- 
-    // Wait for home position to be found
-    while ( !(status & HOME_FOUND) ) {
-        osi_Sleep(100);
-    }
+    struct position myPos;
+    unsigned char currentOrder[MAX_MSG_LENGTH];
 
+    // At start-up we should always find home first
+    if ( goToHome() != SUCCESS ) {
+        // Something went terrible wrong
+        while(1);
+    }
+    // We should now be at zero x-position without an interrupt set
+    myPos.xPosition = 0;
+    // We should now be at zero y-position without an interrupt set
+    myPos.yPosition = 0;
+
+    // Print out in console
+    Report("Home position found\n\r");
+    
+    // Indicate for further use that we have found home
+    status |= HOME_FOUND;
+
+    // Start the forever loop
+    while (1) {
+        // Wait for work from dataTask
+        osi_MsgQRead(&workMsg, currentOrder, OSI_WAIT_FOREVER);
+
+        // When we get a message we should decipher it
+    }
     // What should we do here?
     // TODO(klek): We should have a databuffer with orders
     // looking that contain which coordinates to go to and
@@ -373,8 +380,9 @@ static void dataTask(void* params)
     struct sockaddr_in address;
     HTTPCli_Struct cli;
 
-    // Dummy declaration of 
-    struct order orderBuffer[ORDER_BUFFER_SIZE];
+    // Dummy declaration of buffer
+    //unsigned char orderBuffer[ORDER_BUFFER_SIZE * sizeof(struct order)];
+    Report("Size of the order struct: %i \n\r", sizeof(struct order));
     
     // Start the wlan
     retVal = wlanStart();
@@ -400,11 +408,43 @@ static void dataTask(void* params)
     // Gather data from the web, by using the HTTP connection
     // After this call, the orderBuffer should be full of data.
     // retVal should contain the number of elements
-    retVal = fetchAndParseData(&cli, (struct order*)&orderBuffer, ORDER_BUFFER_SIZE);
+    retVal = fetchAndParseData(&cli, orderBuffer, ORDER_BUFFER_SIZE * SIZE_OF_ORDER);
 
     // Put this data in the message q to workTask
     // Maybe give this task priority to be able to fill the queue
     // and gather more data while workTask is working??
 
     while (1) ;
+}
+
+// Find home function to move us to origo
+static short int goToHome(void)
+{
+    // Start by going to X_HOME
+    // Wait for status-flag X_HOME to come true in status reg
+    while ( !(status & X_HOME) ) {
+        move(NEG_X);
+    }
+    // Adjust position to not trigger interrupt
+    while ( (status & X_HOME) ) {
+        // Remove the flag
+        status &= ~X_HOME;
+        // Enable interrupts
+        gpioEnableInterrupt(HOME_X_AXIS);
+        move(POS_X);
+    }    
+    // Follow up by going to Y_HOME
+    while ( !(status & Y_HOME) ) {
+        move(NEG_Y);
+    }
+    //Adjust position to not trigger interrupt
+    while ( (status & Y_HOME) ) {
+        // Remove the flag
+        status &= ~Y_HOME;
+        // Enable interrupts
+        gpioEnableInterrupt(HOME_Y_AXIS);
+        move(POS_Y);
+    }
+
+    return SUCCESS;
 }

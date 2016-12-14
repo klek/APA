@@ -564,7 +564,8 @@ long setupHTTPConnection(HTTPCli_Struct* cli, struct sockaddr_in* adr)
 
 // Fetches data through HTTP-request. After that it parses the data
 // and puts it in the specified array
-long fetchAndParseData(HTTPCli_Struct* cli, struct order* buff, unsigned int size)
+// NOTE(klek); Perhaps second argument should simply be a char buffer??
+long fetchAndParseData(HTTPCli_Struct* cli, unsigned char* buff/*struct order* buff*/, unsigned int size)
 {
     // Start by checking if size is valid
     if ( size < 1 ) {
@@ -645,7 +646,8 @@ long fetchAndParseData(HTTPCli_Struct* cli, struct order* buff, unsigned int siz
 
         // Fetch the data
         // TODO(klek): Fix this loop
-        while (1) {
+        moreData = true;
+        while ( moreData ) {
             // Request data
             retVal = HTTPCli_readResponseBody(cli, (char *)httpBuff, sizeof(httpBuff) - 1, &moreData);
 
@@ -660,40 +662,77 @@ long fetchAndParseData(HTTPCli_Struct* cli, struct order* buff, unsigned int siz
 
             // Parse the data and put it into our order array
             // How do we find the first command?
-            //
             int i = 0;
-            for ( ; i < retVal ; ) {
-
+            char valid = 1;
+            for ( ; i < retVal && orderIndex < size ; ) {
+                // Assume valid data is now present
+                valid = 1;
                 // Search for known commands
                 switch(httpBuff[i]) {
                     case 'U':
                         // We have a command to move without drawing
                         // find the coordinates
-                        int j = 0;
-                        for ( ; j < COORD_SIZE ; j++ ) {
-                            
-                        }
-                        for ( j = 0 ; j < COORD_SIZE ; j++ ) {
-                            
-                        }
+                        // Set first byte this write to 0 to indicate Pen is up
+                        *(buff + (orderIndex++)) = PEN_UP;
                         break;
 
                     case 'D':
                         // We have a command to move as we are drawing
                         // find the coordinates
+                        // Set first byte this write to 1 to indicate Pen is down
+                        *(buff + (orderIndex++)) = PEN_DOWN;
                         break;
 
                     case 'E':
-                        // End of file, ie print should be done know
+                        // End of order, should read how many orders that
+                        // should have been processed and then exit this loop
+                        *(buff + (orderIndex++)) = END_OF_DATA;
                         break;
 
                     case 'O':
                         // Move to origin, shouldn't be needed??
+                        // Currently no valid data
+                        valid = 0;
                         break;
+
+                    case '\n':
+                        // We found an endline sign
+                        // No valid data
+                        valid = 0;
+                        break;
+                        
                     default:
                         // No valid command was found, increment counter
+                        valid = 0;
                         i++;
                         break;
+                }
+
+                // Copy data if we found a valid command
+                if ( valid == 1 ) {
+                    unsigned char t1[COORD_SIZE * 2];
+                    int j = 0;
+                    for ( ; j < (COORD_SIZE * 2) ; j++ ) {
+                        t1[j] = httpBuff[++i];
+                    }
+                    // Increment the i-variable one more time
+                    i++;
+                    // Reuse the j variable as return value
+                    j = charToInt(t1, COORD_SIZE * 2);
+                    // Save the upper part X-coord at next byte
+                    *(buff + (orderIndex++)) = (j >> 24);
+                    // Save the lower part of X-coord at next byte
+                    *(buff + (orderIndex++)) = (j >> 16);
+                    Report("Upper + lower byte for X: %i \n\r", (*(buff + (orderIndex - 1)) + *(buff + (orderIndex - 2)) ));
+                    // Save the upper part of Y-coord at next byte
+                    *(buff + (orderIndex++)) = (j >> 8);
+                    // Save the lower part of Y-coord at last byte
+                    *(buff + (orderIndex++)) = j;
+                    Report("Upper + lower byte for Y: %i \n\r", (*(buff + (orderIndex - 1)) + *(buff + (orderIndex - 2)) ));
+               }
+                else {
+                    // Increment i
+                    i++;
                 }
             }
         }
@@ -754,26 +793,33 @@ static int flushHTTPResponse(HTTPCli_Handle cli)
 // Converts chars to integers.
 // Used to decode the ascii code recieved from HTTP request into
 // orders performed by the CNC
-static void charToInt(char temp[], short int *xCoord, short int *yCoord)
+static unsigned int charToInt(unsigned char* temp, unsigned char size)
 {
     int i;
-    for(i = 0; i < COMMANDSIZE; i++)
+    short int t1 = 0;
+    int t2 = 0;
+    for(i = 0; i < size; i++)
     {
-        if ((temp[i] < 58) && (temp[i] > 47))
+        if ( ( *(temp + i) < 58 ) && ( *(temp + i) > 47 ) )
         {
-            temp[i] = temp[i]-48;
+            *(temp + i) = *(temp + i) - 48;
         }
         else
         {
-            // Error message?
+            // Error message? Set the slot to zero
+            *(temp + i) = 0;
         }
     }
 
     // Decode the message coordinates to ints
-    *xCoord = 100*temp[0]+10*temp[1]+temp[2];
-    *yCoord = 100*temp[3]+10*temp[4]+temp[5];
+    //*xCoord = 100*temp[0]+10*temp[1]+temp[2];
+    //*yCoord = 100*temp[3]+10*temp[4]+temp[5];
 
-    // Scale millimeters to steps of the motors
-    *xCoord = (*xCoord)*SCALE;
-    *yCoord = (*yCoord)*SCALE;
+    t1 = (*(temp + 0) * 100) + (*(temp + 1) * 10) + *(temp + 2);
+    t2 = (*(temp + 3) * 100) + (*(temp + 4) * 10) + *(temp + 5);
+
+    
+    // Return X-coordinate in upper 16 bytes
+    // and Y-coordinate in lower 16 bytes
+    return ((t1 << 16) + t2);
 }

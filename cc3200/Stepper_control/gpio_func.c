@@ -188,7 +188,7 @@ void gpioTogglePin(unsigned char pinNr)
 }
 
 // Setups interrupt
-void gpioEnableInterrupts(unsigned char pinNr)
+void gpioEnableInterrupt(unsigned char pinNr)
 {
     // Variables to set-up pin-configs
     unsigned int gpioPort = 0;
@@ -198,6 +198,20 @@ void gpioEnableInterrupts(unsigned char pinNr)
     gpioGetPortNPin(pinNr, &gpioPort, &gpioPin);
     MAP_GPIOIntClear(gpioPort, gpioPin);
     MAP_GPIOIntEnable(gpioPort, gpioPin);
+}
+
+// Disable interrupt
+void gpioDisableInterrupt(unsigned char pinNr)
+{
+    // Variables to set-up
+    unsigned int gpioPort = 0;
+    unsigned char gpioPin = 0;
+
+    // Disable the interrupt
+    gpioGetPortNPin(pinNr, &gpioPort, &gpioPin);
+    MAP_GPIOIntDisable(gpioPort, gpioPin);
+    MAP_GPIOIntClear(gpioPort, gpioPin);
+    MAP_IntDisable(gpioGetIntBase(pinNr));
 }
 
 // Return the interrupt port for the specified input
