@@ -44,7 +44,7 @@
  * Macros
  */
 #define WORK_TASK_STACK_SIZE      (2048)
-#define DATA_TASK_STACK_SIZE      (2048)
+#define DATA_TASK_STACK_SIZE      (4096)
 #define INIT_TASK_STACK_SIZE      (512)
 #define WORK_TASK_PRIORITY        (3)
 #define DATA_TASK_PRIORITY        (1)
@@ -63,6 +63,7 @@
 // Macros for message queue
 #define MAX_MSG_LENGTH            (sizeof(struct order) * 2)
 #define MAX_Q_LENGTH              5
+#define MAX_ORDER_PER_MSG         2     // We allow 2 orders in one message
 
 /*
  * Global variables
@@ -81,7 +82,7 @@ extern void (* const g_pfnVectors[])(void);
 static unsigned char status;
 // The order buffer is declared outside off tasks
 // NOTE(klek):
-static unsigned char orderBuffer[ORDER_BUFFER_SIZE * SIZE_OF_ORDER];
+static unsigned char orderBuffer[ORDER_BUFFER_SIZE * PACKED_ORDER_SIZE];
 
 static OsiMsgQ_t workMsg;
 static OsiMsgQ_t dataMsg;
@@ -380,11 +381,13 @@ static void dataTask(void* params)
 {
     // Variables used by this task
     long retVal = -1;
+    int orderBufferEnd = 0;
+    int orderBufferIndex = 0;
     struct sockaddr_in address;
     HTTPCli_Struct cli;
 
     // Dummy declaration of buffer
-    struct order orderToWorkTask[MAX_MSG_LENGTH];
+    struct order orderToWorkTask[MAX_ORDER_PER_MSG];
     
     // Start the wlan
     retVal = wlanStart();
@@ -410,7 +413,7 @@ static void dataTask(void* params)
     // Gather data from the web, by using the HTTP connection
     // After this call, the orderBuffer should be full of data.
     // retVal should contain the number of elements
-    retVal = fetchAndParseData(&cli, orderBuffer, ORDER_BUFFER_SIZE * SIZE_OF_ORDER);
+    orderBufferEnd = fetchAndParseData(&cli, orderBuffer, ORDER_BUFFER_SIZE * SIZE_OF_ORDER);
 
     // Put this data in the message q to workTask
     // Maybe give this task priority to be able to fill the queue
@@ -419,10 +422,21 @@ static void dataTask(void* params)
     while (1) {
         // Read out data from the buffer array
         // Sort the data into a struct order
-
-        // Queue this message to the workTask
-        osi_MsgQWrite(&workMsg, (void *)&orderToWorkTask, OSI_WAIT_FOREVER); // OSI_NO_WAIT?? Maybe we then loose info :S
-        
+        if ( orderBufferIndex < (ORDER_BUFFER_SIZE * PACKED_ORDER_SIZE) ) {
+            if ( (orderBufferIndex + 3) <= orderBufferEnd ) {
+                orderBufferIndex += unPackData(&orderBuffer[orderBufferIndex],&orderToWorkTask[0]);
+                orderBufferIndex += unPackData(&orderBuffer[orderBufferIndex],&orderToWorkTask[1]);
+            }
+            else {
+                // Are we at the end??
+                // Or do we simply need to gather more data??
+            }
+            // Queue this message to the workTask
+            osi_MsgQWrite(&workMsg, (void *)&orderToWorkTask, OSI_WAIT_FOREVER); // OSI_NO_WAIT?? Maybe we then loose info :S
+        }
+        else {
+            // Well this wasn't to good was it??
+        }
     }
 }
 

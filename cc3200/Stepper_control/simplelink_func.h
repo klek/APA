@@ -126,8 +126,11 @@ static unsigned int charToInt(unsigned char* temp, unsigned char size);
 // Packs the data into the 3 lower bytes of the return value
 static unsigned int packData(unsigned char command, unsigned int data);
 
-// Unpaks the data into the 3 lower bytes of the return value
-void unPackData(unsigned int data, struct order* retVal);
+// Unpacks 3 bytes of data from an array and returns them through reference into the
+// provided struct.
+// NOTE(klek): It is very important to provide an array that HAS boundaries outside
+// of the scope of this function
+unsigned short int unPackData(unsigned char* array, struct order* data);
 
 
 

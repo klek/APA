@@ -713,9 +713,9 @@ long fetchAndParseData(HTTPCli_Struct* cli, unsigned char* buff/*struct order* b
 
                 // Copy data if we found a valid command
                 if ( valid == 1 ) {
-                    unsigned char t1[COORD_SIZE * 2];
+                    unsigned char t1[COORD_SIZE];
                     int j = 0;
-                    for ( ; j < (COORD_SIZE * 2) ; j++ ) {
+                    for ( ; j < (COORD_SIZE) ; j++ ) {
                         t1[j] = httpBuff[++i];
                     }
                     // Increment the i-variable one more time
@@ -855,18 +855,16 @@ static unsigned int packData(unsigned char command, unsigned int data)
 // provided struct.
 // NOTE(klek): It is very important to provide an array that HAS boundaries outside
 // of the scope of this function
-void unPackData(unsigned char* array, struct order* data)
+unsigned short int unPackData(unsigned char* array, struct order* data)
 {
     // The specified array contains data that we want to decipher
     // This function in particular deciphers 3 bytes of data into a struct order
 
     // Loop through the array in 3 steps and gather the data into an int
-    int i = 0;
+    //int i = 0;
     unsigned int t1 = 0;
-    for ( ; i < PACKED_ORDER_SIZE; i++ ) {
-        t1 += *(array + i);
-    }
-
+    t1 = (*(array) << 16) + (*(array + 1) << 8) + *(array + 2);
+    
     // t1 should now contain the data from 3 bytes
     // This data should be sorted the form
     // 00000000 CCCCXXXX XXXXXXYY YYYYYYYY
@@ -875,10 +873,21 @@ void unPackData(unsigned char* array, struct order* data)
     //       Y = Y-coordinate
     // We need to read this data out and store it in the specified struct
     // Get the command
-    *data.pen = (t1 & COMMAND_DECODE_MASK) >> COMMAND_SHIFT;
-    *data.xCoord = (t1 & X_COORD_DECODE_MASK) >> X_COORD_UP_SHIFT;
-    *data.yCoord = (ta & Y_COORD_DECODE_MASK);
+    switch ((t1 & COMMAND_DECODE_MASK) >> COMMAND_SHIFT) {
+        case PEN_UP:
+            data->pen = 'U';
+            break;
+        case PEN_DOWN:
+            data->pen = 'D';
+            break;
+        case END_OF_DATA:
+            data->pen = 'E';
+        default:
+            break;
+    }
+    data->xCoord = (t1 & X_COORD_DECODE_MASK) >> X_COORD_UP_SHIFT;
+    data->yCoord = (t1 & Y_COORD_DECODE_MASK);
 
     // The struct data should now contain the valid data
-    
+    return PACKED_ORDER_SIZE;
 }
