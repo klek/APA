@@ -197,6 +197,8 @@ void gpioEnableInterrupt(unsigned char pinNr)
     // Enable the interrupt
     gpioGetPortNPin(pinNr, &gpioPort, &gpioPin);
     MAP_GPIOIntClear(gpioPort, gpioPin);
+    MAP_IntPendClear(gpioGetIntBase(pinNr));
+    MAP_IntEnable(gpioGetIntBase(pinNr));
     MAP_GPIOIntEnable(gpioPort, gpioPin);
 }
 

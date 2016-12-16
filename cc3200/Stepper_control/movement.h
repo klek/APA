@@ -13,7 +13,7 @@
  * Macros
  */
 #define COORD_SIZE         6 // 3 digits for x-coord + 3 digits for y-coord
-#define SIZE_OF_ORDER      5 // The size we want the order struct to be...sizeof() says 6...
+#define SIZE_OR_ORDER      5 // The size we want the order struct to be...sizeof() says 6...
 
 /*
  * Structs

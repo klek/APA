@@ -61,7 +61,7 @@
 #define HOME_FOUND                (1 << 2)
 
 // Macros for message queue
-#define MAX_MSG_LENGTH            8
+#define MAX_MSG_LENGTH            (sizeof(struct order) * 2)
 #define MAX_Q_LENGTH              5
 
 /*
@@ -333,6 +333,9 @@ static void workTask(void* params)
         osi_MsgQRead(&workMsg, currentOrder, OSI_WAIT_FOREVER);
 
         // When we get a message we should decipher it
+        // The message is a struct of type order
+        // and there should be 2 messages in each currentOrder
+        struct order* nextOrder = (struct order*)&currentOrder;
     }
     // What should we do here?
     // TODO(klek): We should have a databuffer with orders
@@ -381,8 +384,7 @@ static void dataTask(void* params)
     HTTPCli_Struct cli;
 
     // Dummy declaration of buffer
-    //unsigned char orderBuffer[ORDER_BUFFER_SIZE * sizeof(struct order)];
-    Report("Size of the order struct: %i \n\r", sizeof(struct order));
+    struct order orderToWorkTask[MAX_MSG_LENGTH];
     
     // Start the wlan
     retVal = wlanStart();
@@ -414,7 +416,14 @@ static void dataTask(void* params)
     // Maybe give this task priority to be able to fill the queue
     // and gather more data while workTask is working??
 
-    while (1) ;
+    while (1) {
+        // Read out data from the buffer array
+        // Sort the data into a struct order
+
+        // Queue this message to the workTask
+        osi_MsgQWrite(&workMsg, (void *)&orderToWorkTask, OSI_WAIT_FOREVER); // OSI_NO_WAIT?? Maybe we then loose info :S
+        
+    }
 }
 
 // Find home function to move us to origo
