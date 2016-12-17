@@ -1,4 +1,64 @@
 
+
+/*
+void read_file(struct order coord[], UART_Handle uart, unsigned int *addedCommands)
+{
+	char msg;
+	unsigned int nCommands = 0;
+	char temp[COORDSIZE];
+	int i;
+
+	UART_read(uart, &msg, 1);
+
+	while(msg != 'E')
+	{
+		switch (msg)
+		{
+			case 'U': // Character for pen up
+
+				for(i = 0; i < COORDSIZE; i++) // Read input chars into temp array
+				{
+					UART_read(uart, &msg, 1);
+					temp[i] = msg;
+				}
+
+				charToInt(temp, &coord[nCommands].x, &coord[nCommands].y); // Convert and scale chars to x and y coordinates in short ints
+
+				coord[nCommands].pen = 'U';
+				nCommands++; // Increase number of commands in coord
+				break;
+
+			case 'D': // Character for pen down
+
+				for(i = 0; i < COORDSIZE; i++) // Read input chars into temp array
+				{
+					UART_read(uart, &msg, 1);
+					temp[i] = msg;
+				}
+				charToInt(temp, &coord[nCommands].x, &coord[nCommands].y); // Convert and scale chars to x and y coordinates in short ints
+				coord[nCommands].pen = 'D';
+				nCommands++; // Increase number of commands in coord
+				break;
+
+			case 'O':
+					moveToOrigin();
+				break;
+
+			default:
+				break;
+
+		}
+		if (nCommands < DATABUFSIZE)
+		{
+			UART_read(uart, &msg, 1);
+		}
+		else break;
+	}
+	(*addedCommands) = nCommands; // How many commands added into coord
+}
+
+*/
+
 void charToInt(char temp[], short int *xCoord, short int *yCoord)
 {
 	int i;

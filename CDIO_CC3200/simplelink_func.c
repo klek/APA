@@ -572,7 +572,7 @@ long fetchAndParseData(HTTPCli_Struct* cli, unsigned char* buff/*struct order* b
 {
     // Start by checking if size is valid
     if ( size < 1 ) {
-        //Report("Buffer size is invalid\n\r");
+        Report("Buffer size is invalid\n\r");
         return FAILURE;
     }
     else {
@@ -606,7 +606,7 @@ long fetchAndParseData(HTTPCli_Struct* cli, unsigned char* buff/*struct order* b
         // Make the request
         retVal = HTTPCli_sendRequest(cli, HTTPCli_METHOD_GET, HOST_LOC_1, 0);
         if ( retVal < 0 ) {
-            //Report("TCP-send error");
+            Report("TCP-send error");
             return FAILURE;
         }
 
@@ -615,7 +615,7 @@ long fetchAndParseData(HTTPCli_Struct* cli, unsigned char* buff/*struct order* b
         if ( retVal != 200 ) {
             flushHTTPResponse(cli);
             if ( retVal == 404 ) {
-                //Report("File not found\n\r");
+                Report("File not found\n\r");
                 return FAILURE;
             }
             return FAILURE;
@@ -635,13 +635,13 @@ long fetchAndParseData(HTTPCli_Struct* cli, unsigned char* buff/*struct order* b
             else if ( id == 1 ) {
                 if(!strncmp((const char *)httpBuff, "chunked", sizeof("chunked")))
                 {
-                    //Report("Chunked transfer encoding\n\r");
+                    Report("Chunked transfer encoding\n\r");
                 }
 
             }
             else if ( id == 2 ) {
                 if ( !strncmp((const char*)httpBuff, "close", sizeof("close")) ){
-                    //Report("Unsupported file-format\n\r");
+                    Report("Unsupported file-format\n\r");
                     return FAILURE;
                 }
             }
@@ -656,17 +656,18 @@ long fetchAndParseData(HTTPCli_Struct* cli, unsigned char* buff/*struct order* b
 
             // Checked if we got any data
             if ( retVal < 0 ) {
-                //Report("File was empty\n\r");
+                Report("File was empty\n\r");
                 return FAILURE;
             }
 
             // Debugging purpose
-            ////Report("Data recieved: %s\n\r", httpBuff);
+            Report("Data recieved: %s\n\r", httpBuff);
 
             // Parse the data and put it into our order array
             // How do we find the first command?
             int i = 0;
             char valid = 1;
+            char command = 0;
             for ( ; i < retVal && orderIndex < size ; ) {
                 // Assume valid data is now present
                 valid = 1;
@@ -676,20 +677,23 @@ long fetchAndParseData(HTTPCli_Struct* cli, unsigned char* buff/*struct order* b
                         // We have a command to move without drawing
                         // find the coordinates
                         // Set first byte this write to 0 to indicate Pen is up
-                        *(buff + (orderIndex++)) = PEN_UP;
+                        //*(buff + (orderIndex++)) = PEN_UP;
+                        command = PEN_UP;
                         break;
 
                     case 'D':
                         // We have a command to move as we are drawing
                         // find the coordinates
                         // Set first byte this write to 1 to indicate Pen is down
-                        *(buff + (orderIndex++)) = PEN_DOWN;
+                        //*(buff + (orderIndex++)) = PEN_DOWN;
+                        command = PEN_DOWN;
                         break;
 
                     case 'E':
                         // End of order, should read how many orders that
                         // should have been processed and then exit this loop
-                        *(buff + (orderIndex++)) = END_OF_DATA;
+                        //*(buff + (orderIndex++)) = END_OF_DATA;
+                        command = END_OF_DATA;
                         break;
 
                     case 'O':
@@ -707,38 +711,39 @@ long fetchAndParseData(HTTPCli_Struct* cli, unsigned char* buff/*struct order* b
                     default:
                         // No valid command was found, increment counter
                         valid = 0;
-                        i++;
                         break;
                 }
 
                 // Copy data if we found a valid command
                 if ( valid == 1 ) {
-                    unsigned char t1[COORDSIZE * 2];
+                    unsigned char t1[COORDSIZE];
                     int j = 0;
-                    for ( ; j < (COORDSIZE * 2) ; j++ ) {
+                    for ( ; j < (COORDSIZE) ; j++ ) {
                         t1[j] = httpBuff[++i];
                     }
                     // Increment the i-variable one more time
                     i++;
                     // Reuse the j variable as return value
-                    j = charToInt(t1, COORDSIZE * 2);
-                    // Save the upper part X-coord at next byte
-                    *(buff + (orderIndex++)) = (j >> 24);
-                    // Save the lower part of X-coord at next byte
-                    *(buff + (orderIndex++)) = (j >> 16);
-                    ////Report("Upper + lower byte for X: %i \n\r", (*(buff + (orderIndex - 1)) + *(buff + (orderIndex - 2)) ));
-                    // Save the upper part of Y-coord at next byte
-                    *(buff + (orderIndex++)) = (j >> 8);
-                    // Save the lower part of Y-coord at last byte
-                    *(buff + (orderIndex++)) = j;
-                    ////Report("Upper + lower byte for Y: %i \n\r", (*(buff + (orderIndex - 1)) + *(buff + (orderIndex - 2)) ));
-               }
+                    j = charToInt(t1, COORDSIZE);
+                    // Repack the data in j
+                    j = packData(command, j);
+                    // Save the third byte of j
+                    *(buff + (orderIndex++)) = ((j & 0x00FF0000) >> 16);
+                    // Save the second byte of j
+                    *(buff + (orderIndex++)) = ((j & 0x0000FF00) >> 8);
+                    //Report("Upper + lower byte for X: %i \n\r", (*(buff + (orderIndex - 1)) + *(buff + (orderIndex - 2)) ));
+                    // Save the first byte of j
+                    *(buff + (orderIndex++)) = (j & 0x000000FF);
+                    //Report("Upper + lower byte for Y: %i \n\r", (*(buff + (orderIndex - 1)) + *(buff + (orderIndex - 2)) ));
+                }
                 else {
                     // Increment i
                     i++;
                 }
             }
         }
+        // If we reach here we should simply return how many items we did put in our array
+        return orderIndex;
     }
 }
 
@@ -825,4 +830,65 @@ static unsigned int charToInt(unsigned char* temp, unsigned char size)
     // Return X-coordinate in upper 16 bytes
     // and Y-coordinate in lower 16 bytes
     return ((t1 << 16) + t2);
+}
+
+// Packs the data into the 3 lower bytes of the return value
+static unsigned int packData(unsigned char command, unsigned int data)
+{
+    unsigned int t1 = 0;
+    // Data contains X-koord in 10 bits of the upper 2 bytes
+    // Downshift this data by 6 bits
+    t1 = (data & X_COORD_CODE_MASK) >> X_COORD_DOWN_SHIFT;
+    // t1 should now contain valid data in bits 10 - 19 = 10 bits
+    // The lower 2 bytes is the Y-koord and should contain valid data in the
+    // 10 lowest bytes only mask these bits and add it to t1 to get a new data
+    data = t1 + (data & Y_COORD_CODE_MASK);
+
+    // The data value should now contain the lowest 20 bits of data
+    // Lets add the 4 lower bits of command to the 4 remaining bits of
+    // the third byte
+    data = ((command & 0x0F) << COMMAND_SHIFT) + data;
+
+    return data;
+}
+
+// Unpacks 3 bytes of data from an array and returns them through reference into the
+// provided struct.
+// NOTE(klek): It is very important to provide an array that HAS boundaries outside
+// of the scope of this function
+unsigned short int unPackData(unsigned char* array, struct order* data)
+{
+    // The specified array contains data that we want to decipher
+    // This function in particular deciphers 3 bytes of data into a struct order
+
+    // Loop through the array in 3 steps and gather the data into an int
+    //int i = 0;
+    unsigned int t1 = 0;
+    t1 = (*(array) << 16) + (*(array + 1) << 8) + *(array + 2);
+
+    // t1 should now contain the data from 3 bytes
+    // This data should be sorted the form
+    // 00000000 CCCCXXXX XXXXXXYY YYYYYYYY
+    // Where C = command
+    //       X = X-coordinate
+    //       Y = Y-coordinate
+    // We need to read this data out and store it in the specified struct
+    // Get the command
+    switch ((t1 & COMMAND_DECODE_MASK) >> COMMAND_SHIFT) {
+        case PEN_UP:
+            data->pen = 'U';
+            break;
+        case PEN_DOWN:
+            data->pen = 'D';
+            break;
+        case END_OF_DATA:
+            data->pen = 'E';
+        default:
+            break;
+    }
+    data->x = (t1 & X_COORD_DECODE_MASK) >> X_COORD_UP_SHIFT;
+    data->y = (t1 & Y_COORD_DECODE_MASK);
+
+    // The struct data should now contain the valid data
+    return PACKED_ORDER_SIZE;
 }

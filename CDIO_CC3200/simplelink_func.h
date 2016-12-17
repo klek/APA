@@ -20,14 +20,21 @@
 
 // Other
 //#include "movement.h"
+#include "CDIO_CC3200.h"
 
 /*
  * Macros
  */
+/*
 #define HOST_NAME          "www.klek.se"
 #define HOST_PORT          80
 #define HOST_LOC_1         "/downloads/part01.txt"
 #define HOST_LOC_2         "/downloads/part02.txt"
+*/
+#define HOST_NAME          "www.webiz.se"
+#define HOST_PORT          80
+#define HOST_LOC_1         "/projects/cdio/"
+//#define HOST_LOC_2         "/downloads/part02.txt"
 
 #define FILE_SIZE          40960            // 40 kB file size
 #define READ_SIZE          1450             // Bytes to read at each time
@@ -35,9 +42,36 @@
 #define FILE_NAME          ""               // TODO(klek): Choose an appropriate file name.
                                             // Maybe one that is changeble rather than a macro?
 
+// Defines regarding how data is packed
+#define COORDSIZE 			 6			      // Number of bytes for coordinates
+#define PACKED_ORDER_SIZE    3                // We want to save data in chunks of 3 bytes
+#define COMMAND_SHIFT        20               // The command should be shifted with 20 bits
+#define X_COORD_UP_SHIFT     10               // The X-coord should be shifted with 10 bits
+#define Y_COORD_UP_SHIFT     0                // The Y-coord should be shifted with 0 bits
+#define X_COORD_DOWN_SHIFT   6                // The X-coord should be downshifted with 6 bits
+#define X_COORD_CODE_MASK    0x03FF0000       // Masks the correct bits for coding of X-coord
+#define Y_COORD_CODE_MASK    0x000003FF       // Masks the correct bits for coding of Y-coord
+#define X_COORD_DECODE_MASK  0x000FFC00       // Masks the correct bits for decoding of X-coord
+#define Y_COORD_DECODE_MASK  0x000003FF       // Masks the correct bits for decoding of Y-coord
+#define COMMAND_DECODE_MASK  0x00F00000       // Masks the correct bits for decoding of the command
+
 /*
  * Structs
  */
+// Possible values for the pen field in order struct
+// Could also be return value for checkPen-function
+enum {
+    PEN_UP,
+    PEN_DOWN,
+    END_OF_DATA
+};
+
+struct order{
+	char pen;
+	unsigned short int x;
+	unsigned short int y;
+};
+
 // NOTE(klek): Copied from examples
 typedef enum{
  /* Choosing this number to avoid overlap with host-driver's error codes */
@@ -112,6 +146,15 @@ static int flushHTTPResponse(HTTPCli_Handle cli);
 // Used to decode the ascii code recieved from HTTP request into
 // orders performed by the CNC
 static unsigned int charToInt(unsigned char* temp, unsigned char size);
+
+// Packs the data into the 3 lower bytes of the return value
+static unsigned int packData(unsigned char command, unsigned int data);
+
+// Unpacks 3 bytes of data from an array and returns them through reference into the
+// provided struct.
+// NOTE(klek): It is very important to provide an array that HAS boundaries outside
+// of the scope of this function
+unsigned short int unPackData(unsigned char* array, struct order* data);
 
 
 #endif

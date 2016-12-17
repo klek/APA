@@ -50,14 +50,42 @@
 /* Include Network Header files */
 #include "simplelink_func.h"
 #include "network_cred.h"
-#include "CDIO_CC3200.h"
+
+#define WORK_TASKSTACKSIZE   10000
+#define DATA_TASKSTACKSIZE 20000
+#define SCALE 	10
+#define DATABUFSIZE 10
+#define MAXDUTY 1650
+#define MINDUTY 800
+#define PENDOWN_PWM 1500
+#define PENUP_PWM 1000
+#define PENMAX_PWM 800
+#define MAXSTEPSY 100000 // Set correct value after measurements
+#define MAXSTEPSX 100000 // Set correct value after measurements
+//#define SIZE_OF_ORDER 3  // The size we want the order struct to be...sizeof() says 6... Use PACKED_ORDER_SIZE instead
 
 
-/* GLOBAL VARABLES */
-struct step steps;
-int originFlagX = 0; // 0 - Not origin. 1 - Origin
-int originFlagY = 0; // 0 - Not origin. 1 - Origin
-int insertPen = 1;
+enum directions {
+    POS_X,
+    POS_Y,
+    NEG_X,
+    NEG_Y
+};
+
+struct step{
+	int x;
+	int y;
+};
+
+
+
+void brytarIntY(unsigned int index);
+void brytarIntX(unsigned int index);
+void InsertPenInt(unsigned int index);
+static void move(unsigned char direction);
+//void read_file(struct order coord[], UART_Handle uart, unsigned int *addedCommands);
+static unsigned int charToInt(unsigned char* temp, unsigned char size);
+void moveToOrigin();
 
 // Work task
 Task_Struct task0Struct;
@@ -68,7 +96,16 @@ Task_Struct task1Struct;
 Char task1Stack[DATA_TASKSTACKSIZE];
 
 // Array for all data to be unpacked to orders
-static unsigned char printData[DATABUFSIZE * SIZE_OF_ORDER];
+static unsigned char printData[DATABUFSIZE * PACKED_ORDER_SIZE];
+static struct order orderToWorkTask[PACKED_ORDER_SIZE]; // 3 orders large
+
+/* GLOBAL VARABLES */
+struct step steps;
+int originFlagX = 0; // 0 - Not origin. 1 - Origin
+int originFlagY = 0; // 0 - Not origin. 1 - Origin
+int insertPen = 1;
+bool workRead = false; // Only Data will be allowed to write to this, Work only read this flag
+bool dataRead = true; // Only Work will be allowed to write to this, Data only read this flag
 
 
 //void charToInt(char temp[], short int *xCoord, short int *yCoord);
@@ -118,7 +155,7 @@ void moveTask(UArg arg0, UArg arg1)
 
 	steps.x = 0;
 	steps.y = 0;
-	unsigned int addedCommands = 0;
+	//unsigned int addedCommands = 0;
 	//char coord[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 	//GPIO_IF_LedOff(MCU_ALL_LED_IND);
@@ -150,8 +187,12 @@ void moveTask(UArg arg0, UArg arg1)
 		System_abort("Error opening the UART");
 	}
 
-	const char Prompt[] = "\fHeeeello!\r\n";
-	UART_write(uart, Prompt, sizeof(Prompt));
+	//const char Prompt[] = "\fHeeeello!\r\n";
+	//UART_write(uart, Prompt, sizeof(Prompt));
+
+	PWM_setDuty(pwm1, PENUP_PWM); // Set the lowest height for servo motor to insert pen
+
+	moveToOrigin();
 
 	PWM_setDuty(pwm1, PENDOWN_PWM); // Set the lowest height for servo motor to insert pen
 
@@ -160,117 +201,76 @@ void moveTask(UArg arg0, UArg arg1)
 		Task_sleep(50);
 	}
 	PWM_setDuty(pwm1, PENUP_PWM); // Set the lowest height for servo motor to insert pen
+
 	//read_file(printData, uart, &addedCommands);
 
 	int nCommands; // Iterator for printData
     while (1)
     {
-
-    	/*
-    	for(nCommands = 0; nCommands < addedCommands; nCommands++) // Step through all commands in printData
+    	if (workRead)
     	{
-    		if (printData[nCommands].pen == 'D')
-    		{
-    			PWM_setDuty(pwm1, PENDOWN_PWM);
-    		}
-			else if (printData[nCommands].pen == 'U')
+    		dataRead = false;
+			for(nCommands = 0; nCommands < PACKED_ORDER_SIZE; nCommands++) // Step through all commands in printData
 			{
-				PWM_setDuty(pwm1, PENUP_PWM);
-			}
-    		Task_sleep(100);
-			// Move to start coordinate
-			while((steps.x != printData[nCommands].x) || (steps.y != printData[nCommands].y))
-			{
-				if(steps.x < printData[nCommands].x)
-				{
-					move(POS_X);
-				}
-				else if (steps.x > printData[nCommands].x)
-				{
-					move(NEG_X);
-				}
+				orderToWorkTask[nCommands].x *= SCALE;
+				orderToWorkTask[nCommands].y *= SCALE;
 
-				if ((steps.x != printData[nCommands].x) && (steps.y != printData[nCommands].y)) // Only sleep if diagonal movement
+				if (orderToWorkTask[nCommands].pen != 'E')
 				{
-					Task_sleep(20);
-					//MAP_UtilsDelay(20000);
-				}
+					if (orderToWorkTask[nCommands].pen == 'D')
+					{
+						PWM_setDuty(pwm1, PENDOWN_PWM);
+					}
+					else if (orderToWorkTask[nCommands].pen == 'U')
+					{
+						PWM_setDuty(pwm1, PENUP_PWM);
+					}
 
-				if(steps.y < printData[nCommands].y)
-				{
-					move(POS_Y);
+					Task_sleep(100);
+					// Move to start coordinate
+					while((steps.x != orderToWorkTask[nCommands].x) || (steps.y != orderToWorkTask[nCommands].y))
+					{
+						if(steps.x < orderToWorkTask[nCommands].x)
+						{
+							move(POS_X);
+						}
+						else if (steps.x > orderToWorkTask[nCommands].x)
+						{
+							move(NEG_X);
+						}
+
+						if ((steps.x != orderToWorkTask[nCommands].x) && (steps.y != orderToWorkTask[nCommands].y)) // Only sleep if diagonal movement
+						{
+							Task_sleep(20);
+							//MAP_UtilsDelay(20000);
+						}
+
+						if(steps.y < orderToWorkTask[nCommands].y)
+						{
+							move(POS_Y);
+						}
+						else if (steps.y > orderToWorkTask[nCommands].y)
+						{
+							move(NEG_Y);
+						}
+					}
 				}
-				else if (steps.y > printData[nCommands].y)
+				else
 				{
-					move(NEG_Y);
+					while(1);
 				}
 			}
+
+			PWM_setDuty(pwm1, PENUP_PWM); // Raise the pen
+			dataRead = true;
     	}
-*/
-    	PWM_setDuty(pwm1, PENUP_PWM); // Raise the pen
-
-    //	read_file(printData,uart, &addedCommands);
+    	else
+    	{
+    		Task_sleep(10);
+    	}
     }
 }
 
-/*
-void read_file(struct order coord[], UART_Handle uart, unsigned int *addedCommands)
-{
-	char msg;
-	unsigned int nCommands = 0;
-	char temp[COORDSIZE];
-	int i;
-
-	UART_read(uart, &msg, 1);
-
-	while(msg != 'E')
-	{
-		switch (msg)
-		{
-			case 'U': // Character for pen up
-
-				for(i = 0; i < COORDSIZE; i++) // Read input chars into temp array
-				{
-					UART_read(uart, &msg, 1);
-					temp[i] = msg;
-				}
-
-				charToInt(temp, &coord[nCommands].x, &coord[nCommands].y); // Convert and scale chars to x and y coordinates in short ints
-
-				coord[nCommands].pen = 'U';
-				nCommands++; // Increase number of commands in coord
-				break;
-
-			case 'D': // Character for pen down
-
-				for(i = 0; i < COORDSIZE; i++) // Read input chars into temp array
-				{
-					UART_read(uart, &msg, 1);
-					temp[i] = msg;
-				}
-				charToInt(temp, &coord[nCommands].x, &coord[nCommands].y); // Convert and scale chars to x and y coordinates in short ints
-				coord[nCommands].pen = 'D';
-				nCommands++; // Increase number of commands in coord
-				break;
-
-			case 'O':
-					moveToOrigin();
-				break;
-
-			default:
-				break;
-
-		}
-		if (nCommands < DATABUFSIZE)
-		{
-			UART_read(uart, &msg, 1);
-		}
-		else break;
-	}
-	(*addedCommands) = nCommands; // How many commands added into coord
-}
-
-*/
 void moveToOrigin()
 {
 	/* Move to the origin */
@@ -284,6 +284,17 @@ void moveToOrigin()
 		move(NEG_Y);
 	}
 }
+
+/*
+void drawCircle()
+{
+	for (theta = 0; theta < 360; theta+=20)
+	{
+		x = x0 + r * cos(theta)
+		y = y0 + r * sin(theta)
+	}
+}
+*/
 
 
 // Function to take 1 step in the specified direction according to
@@ -308,7 +319,6 @@ static void move(unsigned char direction)
 			// Both motors should spin counterclockwise
 			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
 			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
-			steps.xScale = steps.xScale + SCALE;
 			steps.x++;
 			originFlagX = 0;
     	}
@@ -320,7 +330,6 @@ static void move(unsigned char direction)
 			// Left motor should spin clockwise, right motor should spin counterclockwise
 			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 1); // Direction for right driver GP7 - pin 62
 			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
-			steps.yScale = steps.yScale + SCALE;
 			steps.y++;
 			originFlagY = 0;
     	}
@@ -332,7 +341,6 @@ static void move(unsigned char direction)
     		// Both motors should spin clockwise
 			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
 			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
-			steps.xScale = steps.xScale - SCALE;
 			steps.x--;
     	}
     	break;
@@ -342,7 +350,6 @@ static void move(unsigned char direction)
     	{
 			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
 			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
-			steps.yScale = steps.yScale - SCALE;
 			steps.y--;
     	}
     	break;
@@ -369,10 +376,17 @@ static void move(unsigned char direction)
 // orders to be carried out by workTask
 void dataTask(UArg arg0, UArg arg1)
 {
+	while(insertPen)
+	{
+		Task_sleep(100);
+	}
+
     WiFi_Params params;
     WiFi_Handle handle;
     // Variables used by this task
     long retVal = -1;
+    int validData = 0;
+    int orderBufferIndex = 0;
 
     struct sockaddr_in address;
     HTTPCli_Struct cli;
@@ -416,13 +430,32 @@ void dataTask(UArg arg0, UArg arg1)
     // Gather data from the web, by using the HTTP connection
     // After this call, the orderBuffer should be full of data.
     // retVal should contain the number of elements
-    retVal = fetchAndParseData(&cli, printData, DATABUFSIZE * SIZE_OF_ORDER);
+    validData = fetchAndParseData(&cli, printData, DATABUFSIZE * PACKED_ORDER_SIZE);
+
 
     // Put this data in the message q to workTask
     // Maybe give this task priority to be able to fill the queue
     // and gather more data while workTask is working??
 
-    while (1) ; // Fix fix
+    while (1) // Make struct array
+    {
+    	if ( orderBufferIndex < (DATABUFSIZE * PACKED_ORDER_SIZE) ) {
+			if ( ((orderBufferIndex + PACKED_ORDER_SIZE) <= validData) && dataRead) {
+				workRead = false;
+				orderBufferIndex += unPackData(&printData[orderBufferIndex],&orderToWorkTask[0]);
+				orderBufferIndex += unPackData(&printData[orderBufferIndex],&orderToWorkTask[1]);
+				orderBufferIndex += unPackData(&printData[orderBufferIndex],&orderToWorkTask[2]);
+				workRead = true;
+			}
+			else {
+				// Are we at the end??
+				// Or do we simply need to gather more data??
+			}
+			Task_sleep(1000);
+		}
+    }
+
+    // Add fetchandParseData here
 }
 
 /*
@@ -450,7 +483,7 @@ int main(void)
     //taskParams.arg0 = 1000;
     taskParamsWork.stackSize = WORK_TASKSTACKSIZE;
     taskParamsWork.stack = &task0Stack;
-    taskParamsWork.priority = 1;
+    taskParamsWork.priority = 2;
     taskParamsWork.instance->name = "WORK";
     Task_construct(&task0Struct, (Task_FuncPtr)moveTask, &taskParamsWork, NULL);
 
@@ -459,7 +492,7 @@ int main(void)
     //taskParams.arg0 = 1000;
     taskParamsData.stackSize = DATA_TASKSTACKSIZE;
     taskParamsData.stack = &task1Stack;
-    taskParamsData.priority = 2;
+    taskParamsData.priority = 1;
     taskParamsData.instance->name = "DATA";
     Task_construct(&task1Struct, (Task_FuncPtr)dataTask, &taskParamsData, NULL);
 

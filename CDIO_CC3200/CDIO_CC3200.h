@@ -1,3 +1,4 @@
+/*
 #include "uart_if.h"
 
 #define WORK_TASKSTACKSIZE   10000
@@ -14,12 +15,14 @@
 #define MAXSTEPSX 100000 // Set correct value after measurements
 #define SIZE_OF_ORDER 3  // The size we want the order struct to be...sizeof() says 6...
 
+
 enum directions {
     POS_X,
     POS_Y,
     NEG_X,
     NEG_Y
 };
+
 
 // Possible values for the pen field in order struct
 // Could also be return value for checkPen-function
@@ -51,4 +54,4 @@ static void move(unsigned char direction);
 static unsigned int charToInt(unsigned char* temp, unsigned char size);
 void moveToOrigin();
 
-
+*/
