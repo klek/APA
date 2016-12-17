@@ -382,21 +382,19 @@ void dataTask(UArg arg0, UArg arg1)
     //Report("Size of the order struct: %i \n\r", sizeof(struct order));
 
 
-    // Start the wlan
-    retVal = wlanStart();
-    // ERROR CHECKING
-
-
-
     /* Open WiFi */
-   // WiFi_Params_init(&params);
-   // params.bitRate = 5000000; /* Set bit rate to 5 MHz */
-    /*
+    WiFi_Params_init(&params);
+    params.bitRate = 5000000; /* Set bit rate to 5 MHz */
+
     handle = WiFi_open(Board_WIFI, Board_WIFI_SPI, NULL, &params);
     if (handle == NULL) {
     System_abort("Error opening WiFi\n");
     }
-*/
+
+    // Start the wlan
+    retVal = wlanStart();
+    // ERROR CHECKING
+
     // Start by connecting to wlan
     retVal = wlanConnect();
     if ( retVal < 0 ) {
