@@ -34,6 +34,7 @@
 /* BIOS Header files */
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Task.h>
+#include <ti/sysbios/knl/Semaphore.h>
 
 /* TI-RTOS Header files */
 #include <ti/drivers/GPIO.h>
@@ -54,10 +55,10 @@
 #define WORK_TASKSTACKSIZE   10000
 #define DATA_TASKSTACKSIZE 20000
 #define SCALE 	10
-#define DATABUFSIZE 10
+#define DATABUFSIZE 20000
 #define MAXDUTY 1650
 #define MINDUTY 800
-#define PENDOWN_PWM 1500
+#define PENDOWN_PWM 1400 // 1500 tidigare
 #define PENUP_PWM 1000
 #define PENMAX_PWM 800
 #define MAXSTEPSY 100000 // Set correct value after measurements
@@ -95,6 +96,10 @@ Char task0Stack[WORK_TASKSTACKSIZE];
 Task_Struct task1Struct;
 Char task1Stack[DATA_TASKSTACKSIZE];
 
+// Semaphores
+Semaphore_Struct semStruct_ReadWrite;
+Semaphore_Handle semHandle_ReadWrite;
+
 // Array for all data to be unpacked to orders
 static unsigned char printData[DATABUFSIZE * PACKED_ORDER_SIZE];
 static struct order orderToWorkTask[PACKED_ORDER_SIZE]; // 3 orders large
@@ -104,8 +109,7 @@ struct step steps;
 int originFlagX = 0; // 0 - Not origin. 1 - Origin
 int originFlagY = 0; // 0 - Not origin. 1 - Origin
 int insertPen = 1;
-bool workRead = false; // Only Data will be allowed to write to this, Work only read this flag
-bool dataRead = true; // Only Work will be allowed to write to this, Data only read this flag
+bool firstTime = true;
 
 
 //void charToInt(char temp[], short int *xCoord, short int *yCoord);
@@ -138,137 +142,6 @@ void InsertPenInt(unsigned int index)
 {
 	insertPen = 0;
 	IntPendClear(INT_GPIOA1);
-}
-
-
-void moveTask(UArg arg0, UArg arg1)
-{
-	UART_Handle uart;
-	UART_Params uartParams;
-	PWM_Handle pwm1;
-	PWM_Params params;
-
-	// Get port and pins
-	unsigned int GPIO9Port = 0; // PWM (Also LED)
-	unsigned char GPIO9Pin;		// PWM (Also LED)
-	GPIO_IF_GetPortNPin(9, &GPIO9Port, &GPIO9Pin); // PWM (Also LED)
-
-	steps.x = 0;
-	steps.y = 0;
-	//unsigned int addedCommands = 0;
-	//char coord[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-
-	//GPIO_IF_LedOff(MCU_ALL_LED_IND);
-
-	/* Initiate the PWM */
-	uint16_t   pwmPeriod = 20000;      // Period and duty in microseconds
-	uint16_t   duty = 1000;
-	PWM_Params_init(&params);
-	params.period = pwmPeriod;
-	pwm1 = PWM_open(Board_PWM0, &params);
-	MAP_UtilsDelay(20000);
-	PWM_setDuty(pwm1, duty);
-
-	/* Create a UART with data processing off. */
-	UART_Params_init(&uartParams);
-	uartParams.writeDataMode = UART_DATA_BINARY;
-	uartParams.readDataMode = UART_DATA_BINARY;
-	uartParams.readReturnMode = UART_RETURN_FULL;
-	uartParams.readEcho = UART_ECHO_ON;
-	uartParams.baudRate = 9600;
-	uart = UART_open(Board_UART0, &uartParams);
-
-	if (pwm1 == NULL) {
-		System_abort("Board_PWM0 did not open");
-	}
-
-	if (uart == NULL)
-	{
-		System_abort("Error opening the UART");
-	}
-
-	//const char Prompt[] = "\fHeeeello!\r\n";
-	//UART_write(uart, Prompt, sizeof(Prompt));
-
-	PWM_setDuty(pwm1, PENUP_PWM); // Set the lowest height for servo motor to insert pen
-
-	moveToOrigin();
-
-	PWM_setDuty(pwm1, PENDOWN_PWM); // Set the lowest height for servo motor to insert pen
-
-	while(insertPen)
-	{
-		Task_sleep(50);
-	}
-	PWM_setDuty(pwm1, PENUP_PWM); // Set the lowest height for servo motor to insert pen
-
-	//read_file(printData, uart, &addedCommands);
-
-	int nCommands; // Iterator for printData
-    while (1)
-    {
-    	if (workRead)
-    	{
-    		dataRead = false;
-			for(nCommands = 0; nCommands < PACKED_ORDER_SIZE; nCommands++) // Step through all commands in printData
-			{
-				orderToWorkTask[nCommands].x *= SCALE;
-				orderToWorkTask[nCommands].y *= SCALE;
-
-				if (orderToWorkTask[nCommands].pen != 'E')
-				{
-					if (orderToWorkTask[nCommands].pen == 'D')
-					{
-						PWM_setDuty(pwm1, PENDOWN_PWM);
-					}
-					else if (orderToWorkTask[nCommands].pen == 'U')
-					{
-						PWM_setDuty(pwm1, PENUP_PWM);
-					}
-
-					Task_sleep(100);
-					// Move to start coordinate
-					while((steps.x != orderToWorkTask[nCommands].x) || (steps.y != orderToWorkTask[nCommands].y))
-					{
-						if(steps.x < orderToWorkTask[nCommands].x)
-						{
-							move(POS_X);
-						}
-						else if (steps.x > orderToWorkTask[nCommands].x)
-						{
-							move(NEG_X);
-						}
-
-						if ((steps.x != orderToWorkTask[nCommands].x) && (steps.y != orderToWorkTask[nCommands].y)) // Only sleep if diagonal movement
-						{
-							Task_sleep(20);
-							//MAP_UtilsDelay(20000);
-						}
-
-						if(steps.y < orderToWorkTask[nCommands].y)
-						{
-							move(POS_Y);
-						}
-						else if (steps.y > orderToWorkTask[nCommands].y)
-						{
-							move(NEG_Y);
-						}
-					}
-				}
-				else
-				{
-					while(1);
-				}
-			}
-
-			PWM_setDuty(pwm1, PENUP_PWM); // Raise the pen
-			dataRead = true;
-    	}
-    	else
-    	{
-    		Task_sleep(10);
-    	}
-    }
 }
 
 void moveToOrigin()
@@ -372,6 +245,145 @@ static void move(unsigned char direction)
 
 }
 
+void moveTask(UArg arg0, UArg arg1)
+{
+	UART_Handle uart;
+	UART_Params uartParams;
+	PWM_Handle pwm1;
+	PWM_Params params;
+
+	// Get port and pins
+	unsigned int GPIO9Port = 0; // PWM (Also LED)
+	unsigned char GPIO9Pin;		// PWM (Also LED)
+	GPIO_IF_GetPortNPin(9, &GPIO9Port, &GPIO9Pin); // PWM (Also LED)
+
+	steps.x = 0;
+	steps.y = 0;
+	//unsigned int addedCommands = 0;
+	//char coord[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+	//GPIO_IF_LedOff(MCU_ALL_LED_IND);
+
+	/* Initiate the PWM */
+	uint16_t   pwmPeriod = 20000;      // Period and duty in microseconds
+	uint16_t   duty = 1000;
+	PWM_Params_init(&params);
+	params.period = pwmPeriod;
+	pwm1 = PWM_open(Board_PWM0, &params);
+	MAP_UtilsDelay(20000);
+	PWM_setDuty(pwm1, duty);
+
+	/* Create a UART with data processing off. */
+	UART_Params_init(&uartParams);
+	uartParams.writeDataMode = UART_DATA_BINARY;
+	uartParams.readDataMode = UART_DATA_BINARY;
+	uartParams.readReturnMode = UART_RETURN_FULL;
+	uartParams.readEcho = UART_ECHO_ON;
+	uartParams.baudRate = 9600;
+	uart = UART_open(Board_UART0, &uartParams);
+
+	if (pwm1 == NULL) {
+		System_abort("Board_PWM0 did not open");
+	}
+
+	if (uart == NULL)
+	{
+		System_abort("Error opening the UART");
+	}
+
+	//const char Prompt[] = "\fHeeeello!\r\n";
+	//UART_write(uart, Prompt, sizeof(Prompt));
+
+	PWM_setDuty(pwm1, PENUP_PWM); // Set the lowest height for servo motor to insert pen
+
+	moveToOrigin();
+
+	PWM_setDuty(pwm1, PENDOWN_PWM); // Set the lowest height for servo motor to insert pen
+
+	while(insertPen)
+	{
+		Task_sleep(50);
+	}
+	PWM_setDuty(pwm1, PENUP_PWM); // Set the lowest height for servo motor to insert pen
+
+	//read_file(printData, uart, &addedCommands);
+
+	int nCommands; // Iterator for printData
+    while (1)
+    {
+		 // Get access to resource //
+		Semaphore_pend(semHandle_ReadWrite, BIOS_WAIT_FOREVER);
+
+		if (!firstTime)
+		{
+			for(nCommands = 0; nCommands < PACKED_ORDER_SIZE; nCommands++) // Step through all commands in printData
+			{
+				if(orderToWorkTask[nCommands].y != 0)
+				{
+					orderToWorkTask[nCommands].x *= SCALE;
+					orderToWorkTask[nCommands].y *= SCALE;
+
+					if (orderToWorkTask[nCommands].pen == 'E')
+					{
+						PWM_setDuty(pwm1, PENUP_PWM);
+						Task_sleep(50);
+						moveToOrigin();
+						while(1);
+					}
+					else if (orderToWorkTask[nCommands].pen == 'D')
+					{
+						PWM_setDuty(pwm1, PENDOWN_PWM);
+					}
+					else if (orderToWorkTask[nCommands].pen == 'U')
+					{
+						PWM_setDuty(pwm1, PENUP_PWM);
+					}
+
+					Task_sleep(100); // Give some time for the pen to move up or down
+
+					// Move to start coordinate
+					while((steps.x != orderToWorkTask[nCommands].x) || (steps.y != orderToWorkTask[nCommands].y))
+					{
+						if(steps.x < orderToWorkTask[nCommands].x)
+						{
+							move(POS_X);
+						}
+						else if (steps.x > orderToWorkTask[nCommands].x)
+						{
+							move(NEG_X);
+						}
+
+						if ((steps.x != orderToWorkTask[nCommands].x) && (steps.y != orderToWorkTask[nCommands].y)) // Only sleep if diagonal movement
+						{
+							Task_sleep(20);
+							//MAP_UtilsDelay(20000);
+						}
+
+						if(steps.y < orderToWorkTask[nCommands].y)
+						{
+							move(POS_Y);
+						}
+						else if (steps.y > orderToWorkTask[nCommands].y)
+						{
+							move(NEG_Y);
+						}
+					}
+				}
+				else
+				{
+					//const char Prompt[] = "\fX\r\n";
+					//UART_write(uart, Prompt, sizeof(Prompt));
+				}
+			}
+		}
+		else Task_sleep(10);
+
+		// Release access to protected area //
+		Semaphore_post(semHandle_ReadWrite);
+		Task_sleep(100);
+    }
+}
+
 // Task to gather data from the source, dechiper it and finally pack it into the databuffer for
 // orders to be carried out by workTask
 void dataTask(UArg arg0, UArg arg1)
@@ -440,18 +452,23 @@ void dataTask(UArg arg0, UArg arg1)
     while (1) // Make struct array
     {
     	if ( orderBufferIndex < (DATABUFSIZE * PACKED_ORDER_SIZE) ) {
-			if ( ((orderBufferIndex + PACKED_ORDER_SIZE) <= validData) && dataRead) {
-				workRead = false;
+			if ( (orderBufferIndex + PACKED_ORDER_SIZE) <= validData) {
+				// Get access to resource //
+				Semaphore_pend(semHandle_ReadWrite, BIOS_WAIT_FOREVER);
+
 				orderBufferIndex += unPackData(&printData[orderBufferIndex],&orderToWorkTask[0]);
 				orderBufferIndex += unPackData(&printData[orderBufferIndex],&orderToWorkTask[1]);
 				orderBufferIndex += unPackData(&printData[orderBufferIndex],&orderToWorkTask[2]);
-				workRead = true;
+
+				// Release access to protected area //
+				firstTime = false;
+				Semaphore_post(semHandle_ReadWrite);
 			}
 			else {
 				// Are we at the end??
 				// Or do we simply need to gather more data??
 			}
-			Task_sleep(1000);
+			Task_sleep(100);
 		}
     }
 
@@ -477,6 +494,7 @@ int main(void)
 
     Task_Params taskParamsWork;
     Task_Params taskParamsData;
+    Semaphore_Params semParams_ReadWrite;
 
     // Construct Movement Task  thread
     Task_Params_init(&taskParamsWork);
@@ -495,6 +513,13 @@ int main(void)
     taskParamsData.priority = 1;
     taskParamsData.instance->name = "DATA";
     Task_construct(&task1Struct, (Task_FuncPtr)dataTask, &taskParamsData, NULL);
+
+    /* Construct a Semaphore object to be use as a resource lock, inital count 1 */
+    Semaphore_Params_init(&semParams_ReadWrite);
+    Semaphore_construct(&semStruct_ReadWrite, 1, &semParams_ReadWrite);
+
+    /* Obtain instance handle */
+    semHandle_ReadWrite = Semaphore_handle(&semStruct_ReadWrite);
 
 	/* install Button callback */
 	GPIO_setCallback(BOARD_INT0, brytarIntX); // GPIO28 - Pin 18

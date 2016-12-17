@@ -192,6 +192,28 @@ CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runti
 CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/interfaces/ITaskSupport.h
 CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Task__epilogue.h
 CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/package/Task_SupportProxy.h
+CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Semaphore.h
+CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h
+CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h
+CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Diags.h
+CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Log.h
+CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h
+CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Queue.h
+CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Task.h
+CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Clock.h
+CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h
+CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Event.h
+CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h
+CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h
+CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Event__prologue.h
+CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h
+CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Diags.h
+CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Log.h
+CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Queue.h
+CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Clock.h
+CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Task.h
+CDIO_CC3200.obj: C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h
+CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Event__epilogue.h
 CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/tidrivers_cc32xx_2_16_00_08/packages/ti/drivers/GPIO.h
 CDIO_CC3200.obj: C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/tidrivers_cc32xx_2_16_00_08/packages/ti/drivers/UART.h
 CDIO_CC3200.obj: C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/include/stddef.h
@@ -409,6 +431,28 @@ C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h:
 C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/interfaces/ITaskSupport.h: 
 C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Task__epilogue.h: 
 C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/package/Task_SupportProxy.h: 
+C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Semaphore.h: 
+C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h: 
+C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h: 
+C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Diags.h: 
+C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Log.h: 
+C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h: 
+C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Queue.h: 
+C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Task.h: 
+C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Clock.h: 
+C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h: 
+C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Event.h: 
+C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Types.h: 
+C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/IInstance.h: 
+C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Event__prologue.h: 
+C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Assert.h: 
+C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Diags.h: 
+C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/Log.h: 
+C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Queue.h: 
+C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Clock.h: 
+C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Task.h: 
+C:/ti/tirex-content/xdctools_3_32_00_06_core/packages/xdc/runtime/IModule.h: 
+C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/bios_6_45_01_29/packages/ti/sysbios/knl/Event__epilogue.h: 
 C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/tidrivers_cc32xx_2_16_00_08/packages/ti/drivers/GPIO.h: 
 C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/tidrivers_cc32xx_2_16_00_08/packages/ti/drivers/UART.h: 
 C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/include/stddef.h: 
