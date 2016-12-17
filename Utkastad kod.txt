@@ -1,5 +1,27 @@
 
+void charToInt(char temp[], short int *xCoord, short int *yCoord)
+{
+	int i;
+	for(i = 0; i < COMMANDSIZE; i++)
+	{
+		if ((temp[i] < 58) && (temp[i] > 47))
+		{
+			temp[i] = temp[i]-48;
+		}
+		else
+		{
+			// Error message?
+		}
+	}
 
+	// Decode the message coordinates to ints
+	*xCoord = 100*temp[0]+10*temp[1]+temp[2];
+	*yCoord = 100*temp[3]+10*temp[4]+temp[5];
+
+	// Scale millimeters to steps of the motors
+	*xCoord = (*xCoord)*SCALE;
+	*yCoord = (*yCoord)*SCALE;
+}
 
 ------------------------------------------------------------------
 // Fetch data (get coordinate)

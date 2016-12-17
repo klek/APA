@@ -19,6 +19,10 @@
 #include "rom_map.h"
 #include "gpio.h"
 #include "utils.h"
+#include "uart_if.h"
+#include "wlan.h"
+#include <ti/mw/wifi/cc3x00/simplelink/include/simplelink.h>
+//#include "simplelink.h"
 
 // Common interface includes
 #include "gpio_if.h"
@@ -38,44 +42,16 @@
 // #include <ti/drivers/SPI.h>
 #include <ti/drivers/UART.h>
 #include <ti/drivers/PWM.h>
+#include <ti/drivers/WiFi.h>
 // #include <ti/drivers/Watchdog.h>
 
 /* Example/Board Header files */
 #include "Board.h"
+/* Include Network Header files */
+#include "simplelink_func.h"
+#include "network_cred.h"
+#include "CDIO_CC3200.h"
 
-#define TASKSTACKSIZE   100000
-#define QUAD 	1
-#define DIR2	8
-#define SCALE 	10
-#define COORDSIZE 10000
-#define COMMANDSIZE 6
-#define MAXDUTY 1650
-#define MINDUTY 800
-#define PENDOWN 1500
-#define PENUP 1000
-#define PENMAX 800
-#define MAXSTEPSY 100000 // Set correct value after measurements
-#define MAXSTEPSX 100000 // Set correct value after measurements
-
-enum directions {
-    POS_X,
-    POS_Y,
-    NEG_X,
-    NEG_Y
-};
-
-struct step{
-	int x;
-	int y;
-	int xScale;
-	int yScale;
-};
-
-struct command{
-	short int x;
-	short int y;
-	char pen;
-};
 
 /* GLOBAL VARABLES */
 struct step steps;
@@ -83,16 +59,19 @@ int originFlagX = 0; // 0 - Not origin. 1 - Origin
 int originFlagY = 0; // 0 - Not origin. 1 - Origin
 int insertPen = 1;
 
+// Work task
 Task_Struct task0Struct;
-Char task0Stack[TASKSTACKSIZE];
+Char task0Stack[WORK_TASKSTACKSIZE];
 
-void brytarIntY(unsigned int index);
-void brytarIntX(unsigned int index);
-void InsertPenInt(unsigned int index);
-static void move(unsigned char direction);
-void read_file(struct command coord[], UART_Handle uart, unsigned int *addedCommands);
-void moveToOrigin();
-void charToInt(char temp[], short int *xCoord, short int *yCoord);
+// Data task
+Task_Struct task1Struct;
+Char task1Stack[DATA_TASKSTACKSIZE];
+
+// Array for all data to be unpacked to orders
+static unsigned char printData[DATABUFSIZE * SIZE_OF_ORDER];
+
+
+//void charToInt(char temp[], short int *xCoord, short int *yCoord);
 
 void brytarIntY(unsigned int index)
 {
@@ -141,7 +120,6 @@ void moveTask(UArg arg0, UArg arg1)
 	steps.y = 0;
 	unsigned int addedCommands = 0;
 	//char coord[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-	struct command coord[COORDSIZE];
 
 	//GPIO_IF_LedOff(MCU_ALL_LED_IND);
 
@@ -175,70 +153,72 @@ void moveTask(UArg arg0, UArg arg1)
 	const char Prompt[] = "\fHeeeello!\r\n";
 	UART_write(uart, Prompt, sizeof(Prompt));
 
-	PWM_setDuty(pwm1, PENDOWN); // Set the lowest height for servo motor to insert pen
+	PWM_setDuty(pwm1, PENDOWN_PWM); // Set the lowest height for servo motor to insert pen
 
 	while(insertPen)
 	{
 		Task_sleep(50);
 	}
-	PWM_setDuty(pwm1, PENUP); // Set the lowest height for servo motor to insert pen
-	read_file(coord,uart, &addedCommands);
+	PWM_setDuty(pwm1, PENUP_PWM); // Set the lowest height for servo motor to insert pen
+	//read_file(printData, uart, &addedCommands);
 
-	int nCommands; // Iterator for coord
+	int nCommands; // Iterator for printData
     while (1)
     {
 
-    	for(nCommands = 0; nCommands < addedCommands; nCommands++) // Step through all commands in coord
+    	/*
+    	for(nCommands = 0; nCommands < addedCommands; nCommands++) // Step through all commands in printData
     	{
-    		if (coord[nCommands].pen == 'D')
+    		if (printData[nCommands].pen == 'D')
     		{
-    			PWM_setDuty(pwm1, PENDOWN);
+    			PWM_setDuty(pwm1, PENDOWN_PWM);
     		}
-			else if (coord[nCommands].pen == 'U')
+			else if (printData[nCommands].pen == 'U')
 			{
-				PWM_setDuty(pwm1, PENUP);
+				PWM_setDuty(pwm1, PENUP_PWM);
 			}
     		Task_sleep(100);
 			// Move to start coordinate
-			while((steps.x != coord[nCommands].x) || (steps.y != coord[nCommands].y))
+			while((steps.x != printData[nCommands].x) || (steps.y != printData[nCommands].y))
 			{
-				if(steps.x < coord[nCommands].x)
+				if(steps.x < printData[nCommands].x)
 				{
 					move(POS_X);
 				}
-				else if (steps.x > coord[nCommands].x)
+				else if (steps.x > printData[nCommands].x)
 				{
 					move(NEG_X);
 				}
 
-				if ((steps.x != coord[nCommands].x) && (steps.y != coord[nCommands].y)) // Only sleep if diagonal movement
+				if ((steps.x != printData[nCommands].x) && (steps.y != printData[nCommands].y)) // Only sleep if diagonal movement
 				{
 					Task_sleep(20);
 					//MAP_UtilsDelay(20000);
 				}
 
-				if(steps.y < coord[nCommands].y)
+				if(steps.y < printData[nCommands].y)
 				{
 					move(POS_Y);
 				}
-				else if (steps.y > coord[nCommands].y)
+				else if (steps.y > printData[nCommands].y)
 				{
 					move(NEG_Y);
 				}
 			}
     	}
+*/
+    	PWM_setDuty(pwm1, PENUP_PWM); // Raise the pen
 
-    	PWM_setDuty(pwm1, PENUP); // Raise the pen
-
-    	read_file(coord,uart, &addedCommands);
+    //	read_file(printData,uart, &addedCommands);
     }
 }
 
-void read_file(struct command coord[], UART_Handle uart, unsigned int *addedCommands)
+/*
+void read_file(struct order coord[], UART_Handle uart, unsigned int *addedCommands)
 {
 	char msg;
 	unsigned int nCommands = 0;
-	char temp[COMMANDSIZE];
+	char temp[COORDSIZE];
 	int i;
 
 	UART_read(uart, &msg, 1);
@@ -249,20 +229,21 @@ void read_file(struct command coord[], UART_Handle uart, unsigned int *addedComm
 		{
 			case 'U': // Character for pen up
 
-				for(i = 0; i < COMMANDSIZE; i++) // Read input chars into temp array
+				for(i = 0; i < COORDSIZE; i++) // Read input chars into temp array
 				{
 					UART_read(uart, &msg, 1);
 					temp[i] = msg;
 				}
 
 				charToInt(temp, &coord[nCommands].x, &coord[nCommands].y); // Convert and scale chars to x and y coordinates in short ints
+
 				coord[nCommands].pen = 'U';
 				nCommands++; // Increase number of commands in coord
 				break;
 
 			case 'D': // Character for pen down
 
-				for(i = 0; i < COMMANDSIZE; i++) // Read input chars into temp array
+				for(i = 0; i < COORDSIZE; i++) // Read input chars into temp array
 				{
 					UART_read(uart, &msg, 1);
 					temp[i] = msg;
@@ -280,7 +261,7 @@ void read_file(struct command coord[], UART_Handle uart, unsigned int *addedComm
 				break;
 
 		}
-		if (nCommands < COORDSIZE)
+		if (nCommands < DATABUFSIZE)
 		{
 			UART_read(uart, &msg, 1);
 		}
@@ -289,7 +270,7 @@ void read_file(struct command coord[], UART_Handle uart, unsigned int *addedComm
 	(*addedCommands) = nCommands; // How many commands added into coord
 }
 
-
+*/
 void moveToOrigin()
 {
 	/* Move to the origin */
@@ -302,30 +283,6 @@ void moveToOrigin()
 	{
 		move(NEG_Y);
 	}
-}
-
-void charToInt(char temp[], short int *xCoord, short int *yCoord)
-{
-	int i;
-	for(i = 0; i < COMMANDSIZE; i++)
-	{
-		if ((temp[i] < 58) && (temp[i] > 47))
-		{
-			temp[i] = temp[i]-48;
-		}
-		else
-		{
-			// Error message?
-		}
-	}
-
-	// Decode the message coordinates to ints
-	*xCoord = 100*temp[0]+10*temp[1]+temp[2];
-	*yCoord = 100*temp[3]+10*temp[4]+temp[5];
-
-	// Scale millimeters to steps of the motors
-	*xCoord = (*xCoord)*SCALE;
-	*yCoord = (*yCoord)*SCALE;
 }
 
 
@@ -408,6 +365,68 @@ static void move(unsigned char direction)
 
 }
 
+// Task to gather data from the source, dechiper it and finally pack it into the databuffer for
+// orders to be carried out by workTask
+void dataTask(UArg arg0, UArg arg1)
+{
+    WiFi_Params params;
+    WiFi_Handle handle;
+    // Variables used by this task
+    long retVal = -1;
+
+    struct sockaddr_in address;
+    HTTPCli_Struct cli;
+
+    // Dummy declaration of buffer
+    //unsigned char orderBuffer[ORDER_BUFFER_SIZE * sizeof(struct order)];
+    //Report("Size of the order struct: %i \n\r", sizeof(struct order));
+
+
+    // Start the wlan
+    retVal = wlanStart();
+    // ERROR CHECKING
+
+
+
+    /* Open WiFi */
+   // WiFi_Params_init(&params);
+   // params.bitRate = 5000000; /* Set bit rate to 5 MHz */
+    /*
+    handle = WiFi_open(Board_WIFI, Board_WIFI_SPI, NULL, &params);
+    if (handle == NULL) {
+    System_abort("Error opening WiFi\n");
+    }
+*/
+    // Start by connecting to wlan
+    retVal = wlanConnect();
+    if ( retVal < 0 ) {
+        // We are pretty much fucked
+       // Report("Couldn't connect to network\n\r");
+        while(1);
+    }
+
+
+    // We should now be connected to the network
+
+    // Create the HTTP connection
+    // and verify that it works
+    retVal = setupHTTPConnection(&cli, &address);
+    if ( retVal < 0 ) {
+       // Report("Failed to create and setup the HTTP-connection\n\r");
+    }
+
+    // Gather data from the web, by using the HTTP connection
+    // After this call, the orderBuffer should be full of data.
+    // retVal should contain the number of elements
+    retVal = fetchAndParseData(&cli, printData, DATABUFSIZE * SIZE_OF_ORDER);
+
+    // Put this data in the message q to workTask
+    // Maybe give this task priority to be able to fill the queue
+    // and gather more data while workTask is working??
+
+    while (1) ; // Fix fix
+}
+
 /*
  *  ======== main ========
  */
@@ -419,20 +438,32 @@ int main(void)
     Board_initGPIO();
     // Board_initI2C();
     // Board_initSDSPI();
-    // Board_initSPI();
+    //Board_initSPI();
     Board_initUART();
     Board_initPWM();
+    Board_initWiFi();
     // Board_initWatchdog();
 
-    Task_Params taskParams;
+    Task_Params taskParamsWork;
+    Task_Params taskParamsData;
 
-    // Construct heartBeat Task  thread
-    Task_Params_init(&taskParams);
+    // Construct Movement Task  thread
+    Task_Params_init(&taskParamsWork);
     //taskParams.arg0 = 1000;
-    taskParams.stackSize = TASKSTACKSIZE;
-    taskParams.stack = &task0Stack;
-    taskParams.instance->name = "echo";
-    Task_construct(&task0Struct, (Task_FuncPtr)moveTask, &taskParams, NULL);
+    taskParamsWork.stackSize = WORK_TASKSTACKSIZE;
+    taskParamsWork.stack = &task0Stack;
+    taskParamsWork.priority = 1;
+    taskParamsWork.instance->name = "WORK";
+    Task_construct(&task0Struct, (Task_FuncPtr)moveTask, &taskParamsWork, NULL);
+
+    // Construct Task Data thread
+    Task_Params_init(&taskParamsData);
+    //taskParams.arg0 = 1000;
+    taskParamsData.stackSize = DATA_TASKSTACKSIZE;
+    taskParamsData.stack = &task1Stack;
+    taskParamsData.priority = 2;
+    taskParamsData.instance->name = "DATA";
+    Task_construct(&task1Struct, (Task_FuncPtr)dataTask, &taskParamsData, NULL);
 
 	/* install Button callback */
 	GPIO_setCallback(BOARD_INT0, brytarIntX); // GPIO28 - Pin 18

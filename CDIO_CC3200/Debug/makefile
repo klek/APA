@@ -14,9 +14,14 @@ ORDERED_OBJS += \
 "./CDIO_CC3200.obj" \
 "./gpio_if.obj" \
 "./rom_pin_mux_config.obj" \
+"./simplelink_func.obj" \
+"./uart_if.obj" \
 "../CC3200_LAUNCHXL.cmd" \
 $(GEN_CMDS__FLAG) \
+-l"C:/ti/CC3200SDK_1.2.0/cc3200-sdk/oslib/ccs/ti_rtos/ti_rtos.a" \
 -l"C:/ti/tirex-content/tirtos_cc32xx_2_16_00_08/products/CC3200_driverlib_1.1.0/driverlib/ccs/Release/driverlib.a" \
+-lsimplelink.a \
+-lwebclient.a \
 -llibc.a \
 
 -include ../makefile.init
@@ -143,7 +148,7 @@ all: CDIO_CC3200.out
 CDIO_CC3200.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: ARM Linker'
-	"C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=vfplib -me -g --define=cc3200 --define=PART_CC3200 --define=ccs --define=CCWARE --diag_wrap=off --diag_warning=225 --diag_warning=255 --display_error_number --gen_func_subsections=on --abi=eabi -z -m"CDIO_CC3200.map" --stack_size=0x1024 --heap_size=0x0 -i"C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/lib" -i"C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/include" --reread_libs --diag_wrap=off --warn_sections --display_error_number --xml_link_info="CDIO_CC3200_linkInfo.xml" --rom_model -o "CDIO_CC3200.out" $(ORDERED_OBJS)
+	"C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=vfplib -me -g --define=cc3200 --define=__SL__ --define=PART_CC3200 --define=ccs --define=CCWARE --diag_wrap=off --diag_warning=225 --diag_warning=255 --display_error_number --gen_func_subsections=on --abi=eabi -z -m"CDIO_CC3200.map" --stack_size=0x1024 --heap_size=0x1024 -i"C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/lib" -i"C:/ti/CC3200SDK_1.2.0/cc3200-sdk/simplelink/ccs/OS" -i"C:/ti/CC3200SDK_1.2.0/cc3200-sdk/netapps/http/client/ccs/HTTPClientMinLib" -i"C:/ti/ccsv62/ccsv6/tools/compiler/arm_15.12.3.LTS/include" --reread_libs --diag_wrap=off --warn_sections --display_error_number --xml_link_info="CDIO_CC3200_linkInfo.xml" --rom_model -o "CDIO_CC3200.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -157,8 +162,8 @@ CDIO_CC3200.hex: $(EXE_OUTPUTS)
 clean:
 	-$(RM) $(GEN_MISC_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)$(GEN_FILES__QUOTED)$(BIN_OUTPUTS__QUOTED)$(GEN_OPTS__QUOTED)$(GEN_CMDS__QUOTED)
 	-$(RMDIR) $(GEN_MISC_DIRS__QUOTED)
-	-$(RM) "CC3200_LAUNCHXL.d" "CDIO_CC3200.d" "gpio_if.d" "rom_pin_mux_config.d" 
-	-$(RM) "CC3200_LAUNCHXL.obj" "CDIO_CC3200.obj" "gpio_if.obj" "rom_pin_mux_config.obj" 
+	-$(RM) "CC3200_LAUNCHXL.d" "CDIO_CC3200.d" "gpio_if.d" "rom_pin_mux_config.d" "simplelink_func.d" "uart_if.d" 
+	-$(RM) "CC3200_LAUNCHXL.obj" "CDIO_CC3200.obj" "gpio_if.obj" "rom_pin_mux_config.obj" "simplelink_func.obj" "uart_if.obj" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

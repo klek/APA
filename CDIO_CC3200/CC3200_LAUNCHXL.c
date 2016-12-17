@@ -62,7 +62,6 @@
 
 #include <ti/drivers/Power.h>
 #include <ti/drivers/power/PowerCC3200.h>
-
 /*
  *  This define determines whether to use the UARTCC3200DMA driver
  *  or the UARTCC3200 (no DMA) driver.  Set to 1 to use the UARTCC3200DMA

@@ -34,6 +34,7 @@
 							<tool id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.exe.compilerDebug.1391864218" name="ARM Compiler" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.exe.compilerDebug">
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE.535363877" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEFINE" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="cc3200"/>
+									<listOptionValue builtIn="false" value="__SL__"/>
 									<listOptionValue builtIn="false" value="PART_CC3200"/>
 									<listOptionValue builtIn="false" value="ccs"/>
 									<listOptionValue builtIn="false" value="CCWARE"/>
@@ -51,9 +52,17 @@
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DIAG_WRAP.528110904" name="Wrap diagnostic messages (--diag_wrap)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DIAG_WRAP" value="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DIAG_WRAP.off" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.INCLUDE_PATH.1801621841" name="Add dir to #include search path (--include_path, -I)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.INCLUDE_PATH" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${COM_TI_RTSC_TIRTOSCC32XX_INSTALL_DIR}/products/CC3200_driverlib_1.1.0/driverlib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\ti\tirex-content\tirtos_cc32xx_2_16_00_08\products\tidrivers_cc32xx_2_16_00_08\packages\ti\mw\&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\ti\CC3200SDK_1.2.0\cc3200-sdk\oslib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\ti\CC3200SDK_1.2.0\cc3200-sdk\example\common&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\ti\CC3200SDK_1.2.0\cc3200-sdk\netapps&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\ti\CC3200SDK_1.2.0\cc3200-sdk\simplelink_extlib\provisioninglib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\ti\CC3200SDK_1.2.0\cc3200-sdk\simplelink&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\ti\CC3200SDK_1.2.0\cc3200-sdk\simplelink\include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\ti\CC3200SDK_1.2.0\cc3200-sdk\simplelink\source&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${COM_TI_RTSC_TIRTOSCC32XX_INSTALL_DIR}/products/CC3200_driverlib_1.1.0&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${COM_TI_RTSC_TIRTOSCC32XX_INSTALL_DIR}/products/CC3200_driverlib_1.1.0/inc&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${COM_TI_RTSC_TIRTOSCC32XX_INSTALL_DIR}/products/CC3200_driverlib_1.1.0/driverlib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${CG_TOOL_ROOT}/include&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.LITTLE_ENDIAN.1098070491" name="Little endian code [See 'General' page to edit] (--little_endian, -me)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.LITTLE_ENDIAN" value="true" valueType="boolean"/>
@@ -65,7 +74,7 @@
 							</tool>
 							<tool id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.exe.linkerDebug.1901022219" name="ARM Linker" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.exe.linkerDebug">
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.STACK_SIZE.2045676384" name="Set C system stack size (--stack_size, -stack)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.STACK_SIZE" value="0x1024" valueType="string"/>
-								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.HEAP_SIZE.1535359147" name="Heap size for C/C++ dynamic memory allocation (--heap_size, -heap)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.HEAP_SIZE" value="0x0" valueType="string"/>
+								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.HEAP_SIZE.1535359147" name="Heap size for C/C++ dynamic memory allocation (--heap_size, -heap)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.HEAP_SIZE" value="0x1024" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.OUTPUT_FILE.297593615" name="Specify output file name (--output_file, -o)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.OUTPUT_FILE" value="&quot;${ProjName}.out&quot;" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.MAP_FILE.1502697992" name="Link information (map) listed into &lt;file&gt; (--map_file, -m)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.MAP_FILE" value="&quot;${ProjName}.map&quot;" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.XML_LINK_INFO.425406475" name="Detailed link information data-base into &lt;file&gt; (--xml_link_info, -xml_link_info)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.XML_LINK_INFO" value="&quot;${ProjName}_linkInfo.xml&quot;" valueType="string"/>
@@ -73,10 +82,15 @@
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.DIAG_WRAP.1613277589" name="Wrap diagnostic messages (--diag_wrap)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.DIAG_WRAP" value="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.DIAG_WRAP.off" valueType="enumerated"/>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.SEARCH_PATH.1746484364" name="Add &lt;dir&gt; to library search path (--search_path, -i)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.SEARCH_PATH" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${CG_TOOL_ROOT}/lib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\ti\CC3200SDK_1.2.0\cc3200-sdk\simplelink\ccs\OS&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\ti\CC3200SDK_1.2.0\cc3200-sdk\netapps\http\client\ccs\HTTPClientMinLib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${CG_TOOL_ROOT}/include&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.LIBRARY.1935814484" name="Include library file or command file as input (--library, -l)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.linkerID.LIBRARY" valueType="libs">
+									<listOptionValue builtIn="false" value="&quot;C:\ti\CC3200SDK_1.2.0\cc3200-sdk\oslib\ccs\ti_rtos\ti_rtos.a&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${COM_TI_RTSC_TIRTOSCC32XX_INSTALL_DIR}/products/CC3200_driverlib_1.1.0/driverlib/ccs/Release/driverlib.a&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;simplelink.a&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;webclient.a&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;libc.a&quot;"/>
 								</option>
 								<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.exeLinker.inputType__CMD_SRCS.14655289" name="Linker Command Files" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.exeLinker.inputType__CMD_SRCS"/>

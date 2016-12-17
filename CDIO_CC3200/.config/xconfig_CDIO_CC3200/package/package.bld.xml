@@ -7,7 +7,7 @@
         <srcFile name="package/cfg/CDIO_CC3200_pem4.c"/>
     </sources>
     <configscripts>
-        <srcFile name="C:/Users/Gabriel/workspace_v6_2/CDIO_CC3200/CDIO_CC3200.cfg"/>
+        <srcFile name="C:/Users/Gabriel/Documents/GitHub/APA/CDIO_CC3200/CDIO_CC3200.cfg"/>
     </configscripts>
     <makefiles>
         <srcFile name="package.mak" src="package.bld"/>
@@ -44,7 +44,7 @@
         isPartial="false"
         xCfgScript="package/cfg/CDIO_CC3200_pem4.cfg"
         xCfgPrefix="package/cfg/CDIO_CC3200_pem4"
-        cfgScript="C:/Users/Gabriel/workspace_v6_2/CDIO_CC3200/CDIO_CC3200.cfg"
+        cfgScript="C:/Users/Gabriel/Documents/GitHub/APA/CDIO_CC3200/CDIO_CC3200.cfg"
         cfgArgs="null"
         />
     </configurations>
@@ -56,7 +56,7 @@
         profile="release"
         xCfgScript="package/cfg/CDIO_CC3200_pem4.cfg"
         xCfgPrefix="package/cfg/CDIO_CC3200_pem4"
-        cfgScript="C:/Users/Gabriel/workspace_v6_2/CDIO_CC3200/CDIO_CC3200.cfg"
+        cfgScript="C:/Users/Gabriel/Documents/GitHub/APA/CDIO_CC3200/CDIO_CC3200.cfg"
         cfgArgs="null"
         />
     </executables>
