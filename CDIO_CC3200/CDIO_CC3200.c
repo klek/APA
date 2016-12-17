@@ -61,9 +61,13 @@
 #define PENDOWN_PWM 1400 // 1500 tidigare
 #define PENUP_PWM 1000
 #define PENMAX_PWM 800
-#define MAXSTEPSY 100000 // Set correct value after measurements
-#define MAXSTEPSX 100000 // Set correct value after measurements
-//#define SIZE_OF_ORDER 3  // The size we want the order struct to be...sizeof() says 6... Use PACKED_ORDER_SIZE instead
+#define MAXSTEPSY 200
+#define MAXSTEPSX 285
+#define MINSTEPSY 0
+#define MINSTEPSX 0
+#define SCALE_PWM 0.5		// k in y = kx+m for duty cycle of pwm
+#define DELTA_PWM 50		// The +- delta from PENDOWN_PWM
+//#define SIZE_OF_ORDER 3  	// The size we want the order struct to be...sizeof() says 6... Use PACKED_ORDER_SIZE instead
 
 
 enum directions {
@@ -245,6 +249,14 @@ static void move(unsigned char direction)
 
 }
 
+int pwmDutyDown(int y)
+{
+	int duty = 0;
+
+	duty = SCALE_PWM*y + (PENDOWN_PWM - DELTA_PWM);
+	return duty;
+}
+
 void moveTask(UArg arg0, UArg arg1)
 {
 	UART_Handle uart;
@@ -318,7 +330,8 @@ void moveTask(UArg arg0, UArg arg1)
 		{
 			for(nCommands = 0; nCommands < PACKED_ORDER_SIZE; nCommands++) // Step through all commands in printData
 			{
-				if(orderToWorkTask[nCommands].y != 0)
+				if((orderToWorkTask[nCommands].y > MINSTEPSY) && (orderToWorkTask[nCommands].y < MAXSTEPSY) &&
+						(orderToWorkTask[nCommands].x > MINSTEPSX) && (orderToWorkTask[nCommands].x < MAXSTEPSX))
 				{
 					orderToWorkTask[nCommands].x *= SCALE;
 					orderToWorkTask[nCommands].y *= SCALE;
@@ -332,7 +345,8 @@ void moveTask(UArg arg0, UArg arg1)
 					}
 					else if (orderToWorkTask[nCommands].pen == 'D')
 					{
-						PWM_setDuty(pwm1, PENDOWN_PWM);
+						//PWM_setDuty(pwm1, PENDOWN_PWM);
+						PWM_setDuty(pwm1, pwmDutyDown(orderToWorkTask[nCommands].y));
 					}
 					else if (orderToWorkTask[nCommands].pen == 'U')
 					{
@@ -341,7 +355,7 @@ void moveTask(UArg arg0, UArg arg1)
 
 					Task_sleep(100); // Give some time for the pen to move up or down
 
-					// Move to start coordinate
+					// Move to coordinate
 					while((steps.x != orderToWorkTask[nCommands].x) || (steps.y != orderToWorkTask[nCommands].y))
 					{
 						if(steps.x < orderToWorkTask[nCommands].x)
@@ -353,26 +367,32 @@ void moveTask(UArg arg0, UArg arg1)
 							move(NEG_X);
 						}
 
-						if ((steps.x != orderToWorkTask[nCommands].x) && (steps.y != orderToWorkTask[nCommands].y)) // Only sleep if diagonal movement
+						if ((steps.x != orderToWorkTask[nCommands].x) && (steps.y != orderToWorkTask[nCommands].y) &&
+								(orderToWorkTask[nCommands].pen != 'U'))
 						{
-							Task_sleep(20);
+							Task_sleep(20); // If drawing and going diagonal, needed for the stepper motors
 							//MAP_UtilsDelay(20000);
 						}
 
-						if(steps.y < orderToWorkTask[nCommands].y)
+						// Move in y-direction aswell, althought when pen is up prevent diagonal movement
+						if ((orderToWorkTask[nCommands].pen == 'D') ||
+								((orderToWorkTask[nCommands].pen == 'U') && (steps.x == orderToWorkTask[nCommands].x)))
 						{
-							move(POS_Y);
-						}
-						else if (steps.y > orderToWorkTask[nCommands].y)
-						{
-							move(NEG_Y);
+							if(steps.y < orderToWorkTask[nCommands].y)
+							{
+								move(POS_Y);
+							}
+							else if (steps.y > orderToWorkTask[nCommands].y)
+							{
+								move(NEG_Y);
+							}
 						}
 					}
 				}
 				else
 				{
-					//const char Prompt[] = "\fX\r\n";
-					//UART_write(uart, Prompt, sizeof(Prompt));
+					const char Prompt[] = "\fX\r\n";
+					UART_write(uart, Prompt, sizeof(Prompt));
 				}
 			}
 		}
