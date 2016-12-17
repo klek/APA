@@ -61,7 +61,7 @@
 #define HOME_FOUND                (1 << 2)
 
 // Macros for message queue
-#define MAX_MSG_LENGTH            (sizeof(struct order) * 2)
+#define MAX_MSG_LENGTH            SIZE_OF_ORDER
 #define MAX_Q_LENGTH              5
 #define MAX_ORDER_PER_MSG         2     // We allow 2 orders in one message
 
@@ -309,7 +309,8 @@ static void initTask(void* params)
 static void workTask(void* params)
 {
     // Task setup
-    struct position myPos;
+    bool xMove = false;
+    struct order myPos;
     unsigned char currentOrder[MAX_MSG_LENGTH];
 
     // At start-up we should always find home first
@@ -318,14 +319,15 @@ static void workTask(void* params)
         while(1);
     }
     // We should now be at zero x-position without an interrupt set
-    myPos.xPosition = 0;
+    myPos.xCoord = 0;
     // We should now be at zero y-position without an interrupt set
-    myPos.yPosition = 0;
+    myPos.yCoord = 0;
 
     // Print out in console
     Report("Home position found\n\r");
     
     // Indicate for further use that we have found home
+    // and set myPos accordingly
     status |= HOME_FOUND;
 
     // Start the forever loop
@@ -337,6 +339,141 @@ static void workTask(void* params)
         // The message is a struct of type order
         // and there should be 2 messages in each currentOrder
         struct order* nextOrder = (struct order*)&currentOrder;
+
+        // Scale the next order accordingly
+        nextOrder->xCoord = nextOrder->xCoord * SCALE_MM;
+        nextOrder->yCoord = nextOrder->yCoord * SCALE_MM;
+        
+        // Encapsulate us in a loop until the order is done
+        while ( myPos.xCoord != nextOrder->xCoord && myPos.yCoord != nextOrder->yCoord ) {
+            // First of, check boundaries of the working board
+            if ( (status & Y_HOME) || (status & X_HOME) ) {
+                // Any of the flags are set, this means we are standing at an interrupt
+            }
+            else if ( (myPos.xCoord < MAX_X_RANGE) && (myPos.yCoord < MAX_Y_RANGE) ) {
+                // We are in boundaries
+                // Work on the order
+                
+                // Check if pen is supposed to be up or down
+                if ( nextOrder->pen == 'U' ) {
+                    // Move pen to up-position
+                    // Set myPos accordingly
+                    myPos.pen = 'U';
+                    // We take fastest way to end
+                    // Start by walking in x-direction
+                    // Test if we are going in positive or negative direction
+                    // Calculate the number of steps to move
+                    //int stepsToGo = (nextOrder->xCoord - myPos.xCoord);
+                    if ( myPos.xCoord < nextOrder->xCoord ) {
+                        // We move in positive x-direction
+                        move(POS_X);
+                        // Increment the x-value of myPos
+                        myPos.xCoord++;
+                        // Change state
+                        xMove = true;
+                    }
+                    else if ( myPos.xCoord > nextOrder->xCoord ) {
+                        // we move in negative x-direction
+                        move(NEG_X);
+                        // Decrement the x-value of myPos
+                        myPos.xCoord--;
+                        // Change state
+                        xMove = true;
+                    }
+                    else {
+                        // If none of above are true, we should be equal.
+                        // Set X-move as done
+                        xMove = false;
+                    }
+
+                    // Follow by walkin in y-direction
+                    // Check if x-move is done
+                    if ( !xMove ) {
+                        if ( myPos.yCoord < nextOrder->yCoord ) {
+                            // We move in positive y-direction
+                            move(POS_Y);
+                            // Increment the y-value of myPos
+                            myPos.yCoord++;
+                        }
+                        else if ( myPos.yCoord > nextOrder->yCoord ) {
+                            // We move in negative x-direction
+                            move(NEG_Y);
+                            // Decrement the y-value of myPos
+                            myPos.yCoord--;
+                        }
+                        else {
+                            // We don't need this state....
+                        }
+                    }
+                }
+                else if ( nextOrder->pen == 'D' ) {
+                    // Move pen to down-position
+                    // Set myPos accordingly
+                    myPos.pen = 'D';
+                    // We take switching way to end point. Pend between x and y steps
+                    if ( myPos.xCoord < nextOrder->xCoord ) {
+                        // We move in positive x-direction
+                        move(POS_X);
+                        // Increment the x-value of myPos
+                        myPos.xCoord++;
+                        // Change state
+                        xMove = false;
+                    }
+                    else if ( myPos.xCoord > nextOrder->xCoord ) {
+                        // we move in negative x-direction
+                        move(NEG_X);
+                        // Decrement the x-value of myPos
+                        myPos.xCoord--;
+                        // Change state
+                        xMove = false;
+                    }
+                    else {
+                        // If none of above are true, we should be equal.
+                        // Set X-move as done
+                        //xMove = false;
+                    }
+                    // Follow by walkin in y-direction
+                    // Check if x-move is done
+                    if ( !xMove ) {
+                        if ( myPos.yCoord < nextOrder->yCoord ) {
+                            // We move in positive y-direction
+                            move(POS_Y);
+                            // Increment the y-value of myPos
+                            myPos.yCoord++;
+                        }
+                        else if ( myPos.yCoord > nextOrder->yCoord ) {
+                            // We move in negative x-direction
+                            move(NEG_Y);
+                            // Decrement the y-value of myPos
+                            myPos.yCoord--;
+                        }
+                        else {
+                            // We don't need this state....
+                        }
+                    }
+
+                    // Delay us for a few milliseconds to ease the diagonal movement
+                    osi_Sleep(10);
+                }
+                else if ( nextOrder->pen == 'E' ) {
+                    // Set myPos accordingly
+                    myPos.pen = 'D';
+                    // We should handle this and verify how many commands we have processed
+                    // If we are finished, lets go back to origin
+
+                    // Lock us for now
+                    while (1);
+                }
+                else {
+                    // Something went wrong??
+                    // Lock us for now
+                    while (1);
+                }
+            }
+            else {
+                // What to do here??
+            }
+        }
     }
     // What should we do here?
     // TODO(klek): We should have a databuffer with orders
@@ -387,7 +524,8 @@ static void dataTask(void* params)
     HTTPCli_Struct cli;
 
     // Dummy declaration of buffer
-    struct order orderToWorkTask[MAX_ORDER_PER_MSG];
+    //struct order orderToWorkTask[MAX_MSG_LENGTH];
+    struct order orderToWorkTask;
     
     // Start the wlan
     retVal = wlanStart();
@@ -413,7 +551,7 @@ static void dataTask(void* params)
     // Gather data from the web, by using the HTTP connection
     // After this call, the orderBuffer should be full of data.
     // retVal should contain the number of elements
-    orderBufferEnd = fetchAndParseData(&cli, orderBuffer, ORDER_BUFFER_SIZE * SIZE_OF_ORDER);
+    orderBufferEnd = fetchAndParseData(&cli, orderBuffer, ORDER_BUFFER_SIZE * PACKED_ORDER_SIZE);
 
     // Put this data in the message q to workTask
     // Maybe give this task priority to be able to fill the queue
@@ -423,16 +561,16 @@ static void dataTask(void* params)
         // Read out data from the buffer array
         // Sort the data into a struct order
         if ( orderBufferIndex < (ORDER_BUFFER_SIZE * PACKED_ORDER_SIZE) ) {
-            if ( (orderBufferIndex + 3) <= orderBufferEnd ) {
-                orderBufferIndex += unPackData(&orderBuffer[orderBufferIndex],&orderToWorkTask[0]);
-                orderBufferIndex += unPackData(&orderBuffer[orderBufferIndex],&orderToWorkTask[1]);
+            if ( (orderBufferIndex + PACKED_ORDER_SIZE) <= orderBufferEnd ) {
+                orderBufferIndex += unPackData(&orderBuffer[orderBufferIndex],&orderToWorkTask);
+//                orderBufferIndex += unPackData(&orderBuffer[orderBufferIndex],&orderToWorkTask[1]);
             }
             else {
                 // Are we at the end??
                 // Or do we simply need to gather more data??
             }
             // Queue this message to the workTask
-            osi_MsgQWrite(&workMsg, (void *)&orderToWorkTask, OSI_WAIT_FOREVER); // OSI_NO_WAIT?? Maybe we then loose info :S
+            osi_MsgQWrite(&workMsg, (void *)&orderToWorkTask, OSI_NO_WAIT); // OSI_NO_WAIT?? Maybe we then loose info :S
         }
         else {
             // Well this wasn't to good was it??

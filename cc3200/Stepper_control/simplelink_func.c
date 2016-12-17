@@ -721,7 +721,7 @@ long fetchAndParseData(HTTPCli_Struct* cli, unsigned char* buff/*struct order* b
                     // Increment the i-variable one more time
                     i++;
                     // Reuse the j variable as return value
-                    j = charToInt(t1, COORD_SIZE * 2);
+                    j = charToInt(t1, COORD_SIZE);
                     // Repack the data in j
                     j = packData(command, j);
                     // Save the third byte of j

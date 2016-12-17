@@ -12,8 +12,14 @@
 /*
  * Macros
  */
-#define COORD_SIZE         6 // 3 digits for x-coord + 3 digits for y-coord
-#define SIZE_OF_ORDER      5 // The size we want the order struct to be...sizeof() says 6...
+#define COORD_SIZE         6                    // 3 digits for x-coord + 3 digits for y-coord
+#define SIZE_OF_ORDER      sizeof(struct order) // The size we want the order struct to be...sizeof() says 6...
+#define SCALE_MM           10                   // 10 steps in one direction is 1 mm
+#define SCALE_HALF_MM      5                    // 5 steps in one direction is 0.5 mm
+
+// Defining max range for each coordinate
+#define MAX_X_RANGE        300*SCALE_MM
+#define MAX_Y_RANGE        210*SCALE_MM
 
 /*
  * Structs
