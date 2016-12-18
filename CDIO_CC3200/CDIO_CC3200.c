@@ -58,15 +58,16 @@
 #define DATABUFSIZE 20000
 #define MAXDUTY 1650
 #define MINDUTY 800
-#define PENDOWN_PWM 1400 // 1500 tidigare
-#define PENUP_PWM 1000
+#define PENDOWN_PWM 1550 // 1500 tidigare // 1350 efter det
+#define PENUP_PWM 1000 //1000
 #define PENMAX_PWM 800
-#define MAXSTEPSY 200
-#define MAXSTEPSX 285
+#define MAXSTEPSY 2000
+#define MAXSTEPSX 2850
 #define MINSTEPSY 0
 #define MINSTEPSX 0
-#define SCALE_PWM 0.5		// k in y = kx+m for duty cycle of pwm
-#define DELTA_PWM 50		// The +- delta from PENDOWN_PWM
+#define MAXORDERS_INROW 3
+#define SCALE_PWM 0.175		// k in y = kx+m for duty cycle of pwm
+//#define DELTA_PWM 50		// The +- delta from PENDOWN_PWM
 //#define SIZE_OF_ORDER 3  	// The size we want the order struct to be...sizeof() says 6... Use PACKED_ORDER_SIZE instead
 
 
@@ -91,6 +92,7 @@ static void move(unsigned char direction);
 //void read_file(struct order coord[], UART_Handle uart, unsigned int *addedCommands);
 static unsigned int charToInt(unsigned char* temp, unsigned char size);
 void moveToOrigin();
+int pwmDutyDown(int y);
 
 // Work task
 Task_Struct task0Struct;
@@ -114,6 +116,7 @@ int originFlagX = 0; // 0 - Not origin. 1 - Origin
 int originFlagY = 0; // 0 - Not origin. 1 - Origin
 int insertPen = 1;
 bool firstTime = true;
+bool extremePositions = false; // Used for not moving outside boundaries
 
 
 //void charToInt(char temp[], short int *xCoord, short int *yCoord);
@@ -125,7 +128,7 @@ void brytarIntY(unsigned int index)
 	{
 		move(POS_Y);
 	}
-	steps.y = 0;
+	steps.y = 1;
 	originFlagY = 1;
 	IntPendClear(INT_GPIOA0);
 }
@@ -137,7 +140,7 @@ void brytarIntX(unsigned int index)
 	{
 		move(POS_X);
 	}
-	steps.x = 0;
+	steps.x = 1;
 	originFlagX = 1;
 	IntPendClear(INT_GPIOA3);
 }
@@ -153,11 +156,13 @@ void moveToOrigin()
 	/* Move to the origin */
 	while(!originFlagX) // Move until not in the origin
 	{
+		steps.x = 1;
 		move(NEG_X);
 	}
 
 	while(!originFlagY) // Move until not in the origin
 	{
+		steps.y = 1;
 		move(NEG_Y);
 	}
 }
@@ -198,7 +203,13 @@ static void move(unsigned char direction)
 			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
 			steps.x++;
 			originFlagX = 0;
+			extremePositions = false;
     	}
+    	else
+		{
+			// Error
+			extremePositions = true;
+		}
         break;
 
     case POS_Y:
@@ -209,38 +220,58 @@ static void move(unsigned char direction)
 			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
 			steps.y++;
 			originFlagY = 0;
+			extremePositions = false;
+    	}
+    	else
+    	{
+    		// Error
+    		extremePositions = true;
     	}
         break;
 
     case NEG_X:
-    	if (!originFlagX)
+    	if (!originFlagX && (steps.x > MINSTEPSX))
     	{
     		// Both motors should spin clockwise
 			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
 			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 0); // Direction for left driver GP11 - pin 2
 			steps.x--;
+			extremePositions = false;
+    	}
+    	else
+    	{
+    		// Error
+			extremePositions = true;
     	}
     	break;
 
     case NEG_Y:
-    	if (!originFlagY)
+    	if (!originFlagY && (steps.y > MINSTEPSY))
     	{
 			GPIO_IF_Set(7, GPIO7Port, GPIO7Pin, 0); // Direction for right driver GP7 - pin 62
 			GPIO_IF_Set(11, GPIO11Port, GPIO11Pin, 1); // Direction for left driver GP11 - pin 2
 			steps.y--;
+			extremePositions = false;
     	}
+    	else
+		{
+			// Error
+			extremePositions = true;
+		}
     	break;
 
     default:
         break;
     }
 
-    // We should always make a step after direction has been set
-    MAP_UtilsDelay(20000);
-	GPIO_IF_Set(10, GPIO10Port, GPIO10Pin, 1); // Step on - Pin 1 GP10
-	MAP_UtilsDelay(20000);
-	GPIO_IF_Set(10, GPIO10Port, GPIO10Pin, 0); // Step off - Pin 1 GP10
-
+    if (!extremePositions)
+    {
+		// We should always make a step after direction has been set
+		MAP_UtilsDelay(20000);
+		GPIO_IF_Set(10, GPIO10Port, GPIO10Pin, 1); // Step on - Pin 1 GP10
+		MAP_UtilsDelay(20000);
+		GPIO_IF_Set(10, GPIO10Port, GPIO10Pin, 0); // Step off - Pin 1 GP10
+    }
 
     //MAP_UtilsDelay(20000);                     // Can we have this smaller?
     //GPIO_IF_LedOn(MCU_ORANGE_LED_GPIO);
@@ -249,13 +280,13 @@ static void move(unsigned char direction)
 
 }
 
+
 int pwmDutyDown(int y)
 {
-	int duty = 0;
-
-	duty = SCALE_PWM*y + (PENDOWN_PWM - DELTA_PWM);
+	int duty = -SCALE_PWM*y + PENDOWN_PWM;
 	return duty;
 }
+
 
 void moveTask(UArg arg0, UArg arg1)
 {
@@ -269,8 +300,10 @@ void moveTask(UArg arg0, UArg arg1)
 	unsigned char GPIO9Pin;		// PWM (Also LED)
 	GPIO_IF_GetPortNPin(9, &GPIO9Port, &GPIO9Pin); // PWM (Also LED)
 
-	steps.x = 0;
-	steps.y = 0;
+	steps.x = 2850;
+	steps.y = 2000;
+	int xDelta = 0;
+	int yDelta = 0;
 	//unsigned int addedCommands = 0;
 	//char coord[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
@@ -323,23 +356,33 @@ void moveTask(UArg arg0, UArg arg1)
 	int nCommands; // Iterator for printData
     while (1)
     {
-		 // Get access to resource //
-		Semaphore_pend(semHandle_ReadWrite, BIOS_WAIT_FOREVER);
-
 		if (!firstTime)
 		{
+			 // Get access to resource //
+			Semaphore_pend(semHandle_ReadWrite, BIOS_WAIT_FOREVER);
+
 			for(nCommands = 0; nCommands < PACKED_ORDER_SIZE; nCommands++) // Step through all commands in printData
 			{
+				// Scale to correct number of steps
+				orderToWorkTask[nCommands].x *= SCALE;
+				orderToWorkTask[nCommands].y *= SCALE;
+
+				// Calculate delta
+				xDelta = orderToWorkTask[nCommands].x - steps.x;
+				yDelta = orderToWorkTask[nCommands].y - steps.y;
+
+				// Make positive if negative
+				xDelta = (xDelta*xDelta)/xDelta;
+				yDelta = (yDelta*yDelta)/yDelta;
+
+				//if ((orderToWorkTask[nCommands].pen == 'D' && (xDelta > MAXORDERS_INROW) || (yDelta > MAXORDERS_INROW))); // Do nothing
 				if((orderToWorkTask[nCommands].y > MINSTEPSY) && (orderToWorkTask[nCommands].y < MAXSTEPSY) &&
 						(orderToWorkTask[nCommands].x > MINSTEPSX) && (orderToWorkTask[nCommands].x < MAXSTEPSX))
 				{
-					orderToWorkTask[nCommands].x *= SCALE;
-					orderToWorkTask[nCommands].y *= SCALE;
-
 					if (orderToWorkTask[nCommands].pen == 'E')
 					{
 						PWM_setDuty(pwm1, PENUP_PWM);
-						Task_sleep(50);
+						MAP_UtilsDelay(80000);
 						moveToOrigin();
 						while(1);
 					}
@@ -353,7 +396,8 @@ void moveTask(UArg arg0, UArg arg1)
 						PWM_setDuty(pwm1, PENUP_PWM);
 					}
 
-					Task_sleep(100); // Give some time for the pen to move up or down
+					//Task_sleep(100); // Give some time for the pen to move up or down
+					MAP_UtilsDelay(200000);
 
 					// Move to coordinate
 					while((steps.x != orderToWorkTask[nCommands].x) || (steps.y != orderToWorkTask[nCommands].y))
@@ -367,13 +411,24 @@ void moveTask(UArg arg0, UArg arg1)
 							move(NEG_X);
 						}
 
-						if ((steps.x != orderToWorkTask[nCommands].x) && (steps.y != orderToWorkTask[nCommands].y) &&
-								(orderToWorkTask[nCommands].pen != 'U'))
+						//if ((steps.x != orderToWorkTask[nCommands].x) && (steps.y != orderToWorkTask[nCommands].y) &&
+						//		(orderToWorkTask[nCommands].pen != 'U'))
+						if ((steps.x != orderToWorkTask[nCommands].x) && (steps.y != orderToWorkTask[nCommands].y))
 						{
-							Task_sleep(20); // If drawing and going diagonal, needed for the stepper motors
-							//MAP_UtilsDelay(20000);
+							//Task_sleep(20); // If drawing and going diagonal, needed for the stepper motors
+							MAP_UtilsDelay(100000);
 						}
 
+						if(steps.y < orderToWorkTask[nCommands].y)
+						{
+							move(POS_Y);
+						}
+						else if (steps.y > orderToWorkTask[nCommands].y)
+						{
+							move(NEG_Y);
+						}
+
+						/*
 						// Move in y-direction aswell, althought when pen is up prevent diagonal movement
 						if ((orderToWorkTask[nCommands].pen == 'D') ||
 								((orderToWorkTask[nCommands].pen == 'U') && (steps.x == orderToWorkTask[nCommands].x)))
@@ -387,12 +442,13 @@ void moveTask(UArg arg0, UArg arg1)
 								move(NEG_Y);
 							}
 						}
+						*/
 					}
 				}
 				else
 				{
-					const char Prompt[] = "\fX\r\n";
-					UART_write(uart, Prompt, sizeof(Prompt));
+					//const char Prompt[] = "\fX\r\n";
+					//UART_write(uart, Prompt, sizeof(Prompt));
 				}
 			}
 		}
