@@ -52,21 +52,22 @@
 #include "simplelink_func.h"
 #include "network_cred.h"
 
-#define WORK_TASKSTACKSIZE   10000
-#define DATA_TASKSTACKSIZE 20000
-#define SCALE 	10
-#define DATABUFSIZE 20000
-#define MAXDUTY 1650
-#define MINDUTY 800
-#define PENDOWN_PWM 1550 // 1500 tidigare // 1350 efter det
-#define PENUP_PWM 1000 //1000
-#define PENMAX_PWM 800
-#define MAXSTEPSY 2000
-#define MAXSTEPSX 2850
-#define MINSTEPSY 0
-#define MINSTEPSX 0
-#define MAXORDERS_INROW 3
-#define SCALE_PWM 0.175		// k in y = kx+m for duty cycle of pwm
+#define WORK_TASKSTACKSIZE	10000
+#define DATA_TASKSTACKSIZE 	20000
+#define SCALE 				10
+#define DATABUFSIZE 		30000
+#define MAXDUTY 			1650
+#define MINDUTY 			800
+#define PENDOWN_PWM 		1550 // 1500 tidigare // 1350 efter det
+#define PENUP_PWM 			1000 //1000
+#define PENMAX_PWM 			800
+#define MAXSTEPSY 			2000
+#define MAXSTEPSX 			2850
+#define MINSTEPSY 			0
+#define MINSTEPSX	 		0
+#define MAXORDERS_INROW 	3
+#define SCALE_PWM 			0.175		// k in y = kx+m for duty cycle of pwm
+#define OFFSET_PWM 			150
 //#define DELTA_PWM 50		// The +- delta from PENDOWN_PWM
 //#define SIZE_OF_ORDER 3  	// The size we want the order struct to be...sizeof() says 6... Use PACKED_ORDER_SIZE instead
 
@@ -283,7 +284,7 @@ static void move(unsigned char direction)
 
 int pwmDutyDown(int y)
 {
-	int duty = -SCALE_PWM*y + PENDOWN_PWM;
+	int duty = -SCALE_PWM*y + PENDOWN_PWM + OFFSET_PWM;
 	return duty;
 }
 
